@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="red_primary">#E63946</color>
+    <color name="blue_primary">#2563EB</color>
+    <color name="green_avatar">#1A7A5E</color>
+    <color name="bg_grey">#F2F2F2</color>
+    <color name="bg_home">#F5F5F5</color>
+    <color name="text_dark">#111111</color>
+    <color name="text_grey">#888888</color>
+    <color name="text_grey2">#555555</color>
+    <color name="border_grey">#DDDDDD</color>
+    <color name="promo_bg">#FFF5F5</color>
+    <color name="promo_border">#FECACA</color>
+    <color name="white">#FFFFFF</color>
+    <color name="divider">#EEEEEE</color>
+    <color name="grad1_start">#F4A261</color>
+    <color name="grad1_end">#E76F51</color>
+    <color name="card_shadow">#14000000</color>
+</resources>

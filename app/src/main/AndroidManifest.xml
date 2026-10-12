@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application
+        android:allowBackup="true"
+        android:label="FoodHub"
+        android:theme="@style/Theme.FoodHub"
+        android:supportsRtl="true">
+
+        <activity android:name=".ui.auth.LoginActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".ui.auth.SignUpActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.home.MainActivity"/>
+        <activity android:name=".ui.account.AccountActivity"/>
+        <activity android:name=".ui.account.UserInfoActivity"/>
+        <activity android:name=".ui.product.ProductDetailActivity"/>
+        <activity android:name=".ui.order.OrderDetailActivity"/>
+        <activity android:name=".ui.cart.CartActivity"/>
+        <activity android:name=".ui.checkout.CheckoutActivity"
+            android:windowSoftInputMode="adjustResize"/>
+
+    </application>
+</manifest>

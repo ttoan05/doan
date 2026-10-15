@@ -1,0 +1,68 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="40dp"
+    android:height="40dp"
+    android:viewportWidth="40"
+    android:viewportHeight="40">
+    <!-- Base green lawn -->
+    <path
+        android:fillColor="#8BC34A"
+        android:pathData="M4,34 h32 a2,2 0 0 1 2,2 v1 a1,1 0 0 1 -1,1 H3 a1,1 0 0 1 -1,-1 v-1 a2,2 0 0 1 2,-2 z" />
+
+    <!-- House Body / Walls -->
+    <path
+        android:fillColor="#FFF8EE"
+        android:strokeColor="#D7CCC8"
+        android:strokeWidth="1"
+        android:pathData="M8,18 h24 v16 h-24 z" />
+
+    <!-- Chimney -->
+    <path
+        android:fillColor="#D97706"
+        android:strokeColor="#B45309"
+        android:strokeWidth="0.8"
+        android:pathData="M27,10 h4 v7 h-4 z" />
+
+    <!-- Roof -->
+    <path
+        android:fillColor="#E76F51"
+        android:strokeColor="#C1440E"
+        android:strokeWidth="1"
+        android:pathData="M20,6 L5,18 h30 z" />
+
+    <!-- Roof Eaves Accent -->
+    <path
+        android:fillColor="#F4A261"
+        android:pathData="M20,6 L6,17.5 h28 z" />
+
+    <!-- Door -->
+    <path
+        android:fillColor="#B45309"
+        android:pathData="M17,24 h6 v10 h-6 z" />
+
+    <!-- Door knob -->
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M21.5,29.5 m-0.8,0 a0.8,0.8 0 1,1 1.6,0 a0.8,0.8 0 1,1 -1.6,0" />
+
+    <!-- Left Window -->
+    <path
+        android:fillColor="#BAE6FD"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="0.8"
+        android:pathData="M10.5,22 h4.5 v5 h-4.5 z" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="0.5"
+        android:pathData="M12.75,22 v5 M10.5,24.5 h4.5" />
+
+    <!-- Right Window -->
+    <path
+        android:fillColor="#BAE6FD"
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="0.8"
+        android:pathData="M25,22 h4.5 v5 h-4.5 z" />
+    <path
+        android:strokeColor="#94A3B8"
+        android:strokeWidth="0.5"
+        android:pathData="M27.25,22 v5 M25,24.5 h4.5" />
+</vector>

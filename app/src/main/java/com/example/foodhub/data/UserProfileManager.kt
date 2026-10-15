@@ -26,6 +26,11 @@ object UserProfileManager {
         private set
     var job: String = ""
         private set
+    var role: String = "user"
+        private set
+
+    val isAdmin: Boolean
+        get() = role.equals("admin", ignoreCase = true) || email.equals("admin@foodhub.com", ignoreCase = true)
 
     val avatarLetter: String
         get() = name.trim().firstOrNull()?.uppercase() ?: "U"
@@ -40,6 +45,7 @@ object UserProfileManager {
         this.gender = user.gender
         this.birthday = user.birthday
         this.job = user.job
+        this.role = user.role
         this.username = if (user.email.contains("@")) user.email.substringBefore("@") else user.name.lowercase().replace(" ", "_")
         onChanged?.invoke()
     }
@@ -52,6 +58,7 @@ object UserProfileManager {
         this.gender = ""
         this.birthday = ""
         this.job = ""
+        this.role = "user"
         this.username = ""
         onChanged?.invoke()
     }

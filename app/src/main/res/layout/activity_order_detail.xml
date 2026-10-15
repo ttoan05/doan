@@ -95,6 +95,55 @@
                     android:textColor="@color/text_grey2"/>
             </LinearLayout>
 
+            <!-- Đánh giá đơn hàng (Review) -->
+            <LinearLayout
+                android:id="@+id/llReviewCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="10dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="⭐ Đánh giá đơn hàng"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:id="@+id/tvReviewStars"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:textColor="#F59E0B"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:id="@+id/tvReviewComment"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_dark"/>
+
+                <Button
+                    android:id="@+id/btnWriteReview"
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_btn_red"
+                    android:backgroundTint="@null"
+                    android:text="Đánh giá món ăn ngay"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white"/>
+            </LinearLayout>
+
             <!-- Tiến trình -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -185,6 +234,31 @@
                         android:layout_height="wrap_content"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"/>
+                </LinearLayout>
+
+                <!-- Dòng giảm giá voucher -->
+                <LinearLayout
+                    android:id="@+id/llDetailDiscountRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+                    <TextView
+                        android:id="@+id/tvDetailDiscountLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Giảm giá voucher"
+                        android:textSize="14sp"
+                        android:textColor="#16A34A"/>
+                    <TextView
+                        android:id="@+id/tvDetailDiscount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#16A34A"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -281,6 +355,28 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"/>
+
+                <LinearLayout
+                    android:id="@+id/llDetailOrderNote"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Ghi chú đơn hàng"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_grey"/>
+                    <TextView
+                        android:id="@+id/tvDetailOrderNote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textSize="14sp"
+                        android:textStyle="italic"
+                        android:textColor="@color/text_dark"/>
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>

@@ -8,7 +8,7 @@ enum class NotificationType(val label: String, val iconBg: String) {
 }
 
 data class AppNotification(
-    var id: Long,
+    var id: Long = 0L,
     val type: NotificationType,
     val emoji: String,              // icon hiển thị trong vòng tròn bên trái
     val title: String,

@@ -11,7 +11,9 @@ data class CartItem(
     val emoji: String,
     val price: Int,
     var quantity: Int,
-    val imageRes: Int = 0
+    val imageRes: Int = 0,
+    /** Ghi chú / tùy chọn của riêng dòng món này (vd: "ít đường, thêm topping"). */
+    val note: String = ""
 ) {
     val total: Int
         get() = price * quantity

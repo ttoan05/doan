@@ -56,7 +56,7 @@ class RestaurantAdapter(
         holder.tvName.text    = r.name
         holder.tvDesc.text    = r.desc
         holder.tvRating.text  = r.rating.toString()
-        holder.tvTime.text    = "🕐 ${r.time}"
+        holder.tvTime.text    = "🕒 ${r.time}"
         holder.tvDist.text    = "📍 ${r.dist}"
 
         if (r.imageRes != 0) {
@@ -72,6 +72,7 @@ class RestaurantAdapter(
         }
 
         holder.btnMenu.setOnClickListener { onViewMenu(r) }
+        holder.itemView.setOnClickListener { onViewMenu(r) }
 
         // Nút tim (yêu thích)
         holder.ivHeart.setImageResource(

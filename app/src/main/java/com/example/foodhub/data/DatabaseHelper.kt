@@ -7,25 +7,33 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.example.foodhub.data.model.AppNotification
 import com.example.foodhub.data.model.CartItem
+import com.example.foodhub.data.model.Food
 import com.example.foodhub.data.model.NotificationType
 import com.example.foodhub.data.model.Order
 import com.example.foodhub.data.model.OrderStatus
+import com.example.foodhub.data.model.Review
+import com.example.foodhub.data.model.SavedAddress
 import com.example.foodhub.data.model.User
+import com.example.foodhub.utils.SampleData
 
 /**
  * Quản lý cơ sở dữ liệu SQLite cho ứng dụng FoodHub.
  * Lưu trữ:
- * 1. Bảng "users": Tài khoản người dùng.
+ * 1. Bảng "users": Tài khoản người dùng & vai trò (user / admin).
  * 2. Bảng "cart_items": Giỏ hàng theo từng user_id riêng biệt.
  * 3. Bảng "orders" & "order_items": Lịch sử đơn hàng theo từng user_id riêng biệt.
  * 4. Bảng "notifications": Thông báo thật và trạng thái đã đọc theo từng user_id riêng biệt.
+ * 5. Bảng "addresses": Sổ địa chỉ giao hàng.
+ * 6. Bảng "reviews": Đánh giá và chấm sao món ăn / quán.
+ * 7. Bảng "categories": Danh mục món ăn hệ thống (Admin quản lý).
+ * 8. Bảng "foods": Danh sách món ăn hệ thống (Admin thêm / sửa / xóa).
  */
 class DatabaseHelper private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, DATABASE_NAME, null, DATABASE_VERSION) {
 
     companion object {
         private const val DATABASE_NAME = "foodhub_app.db"
-        private const val DATABASE_VERSION = 3
+        private const val DATABASE_VERSION = 7
 
         // Bảng users
         const val TABLE_USERS = "users"
@@ -37,6 +45,7 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_GENDER = "gender"
         const val COL_BIRTHDAY = "birthday"
         const val COL_JOB = "job"
+        const val COL_ROLE = "role"
 
         // Bảng cart_items (Giỏ hàng riêng theo từng user_id)
         const val TABLE_CART = "cart_items"
@@ -49,6 +58,7 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_CART_PRICE = "price"
         const val COL_CART_QUANTITY = "quantity"
         const val COL_CART_IMAGE_RES = "image_res"
+        const val COL_CART_NOTE = "note"
 
         // Bảng orders (Đơn hàng riêng theo từng user_id)
         const val TABLE_ORDERS = "orders"
@@ -63,6 +73,9 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_ORDER_PAYMENT = "payment_method"
         const val COL_ORDER_STATUS = "status"
         const val COL_ORDER_STEP = "process_step"
+        const val COL_ORDER_NOTE = "order_note"
+        const val COL_ORDER_VOUCHER = "voucher_code"
+        const val COL_ORDER_DISCOUNT = "discount"
 
         // Bảng order_items (Chi tiết món của từng đơn hàng)
         const val TABLE_ORDER_ITEMS = "order_items"
@@ -75,6 +88,7 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_OI_PRICE = "price"
         const val COL_OI_QUANTITY = "quantity"
         const val COL_OI_IMAGE_RES = "image_res"
+        const val COL_OI_NOTE = "note"
 
         // Bảng notifications (Thông báo riêng theo từng user_id)
         const val TABLE_NOTIFICATIONS = "notifications"
@@ -89,6 +103,45 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_NOTIF_ORDER_ID = "order_id"
         const val COL_NOTIF_PROMO_CODE = "promo_code"
 
+        // Bảng addresses (Sổ địa chỉ giao hàng quen thuộc)
+        const val TABLE_ADDRESSES = "addresses"
+        const val COL_ADDR_ID = "id"
+        const val COL_ADDR_USER_ID = "user_id"
+        const val COL_ADDR_LABEL = "label"
+        const val COL_ADDR_RECEIVER = "receiver"
+        const val COL_ADDR_PHONE = "phone"
+        const val COL_ADDR_ADDRESS = "address"
+        const val COL_ADDR_IS_DEFAULT = "is_default"
+
+        // Bảng reviews (Đánh giá sau giao hàng)
+        const val TABLE_REVIEWS = "reviews"
+        const val COL_REVIEW_ID = "id"
+        const val COL_REVIEW_USER_ID = "user_id"
+        const val COL_REVIEW_ORDER_ID = "order_id"
+        const val COL_REVIEW_RESTAURANT = "restaurant"
+        const val COL_REVIEW_STARS = "stars"
+        const val COL_REVIEW_COMMENT = "comment"
+        const val COL_REVIEW_CREATED_AT = "created_at"
+
+        // Bảng categories (Danh mục món ăn hệ thống - Admin)
+        const val TABLE_CATEGORIES = "categories"
+        const val COL_CAT_ID = "id"
+        const val COL_CAT_NAME = "name"
+
+        // Bảng foods (Danh sách món ăn hệ thống - Admin)
+        const val TABLE_FOODS = "foods"
+        const val COL_FOOD_ID = "id"
+        const val COL_FOOD_NAME = "name"
+        const val COL_FOOD_RESTAURANT = "restaurant"
+        const val COL_FOOD_RATING = "rating"
+        const val COL_FOOD_REVIEWS = "reviews"
+        const val COL_FOOD_PRICE = "price"
+        const val COL_FOOD_CATEGORY = "category"
+        const val COL_FOOD_EMOJI = "emoji"
+        const val COL_FOOD_BG_START = "bg_start"
+        const val COL_FOOD_BG_END = "bg_end"
+        const val COL_FOOD_IMAGE_RES = "image_res"
+
         @Volatile
         private var instance: DatabaseHelper? = null
 
@@ -100,89 +153,17 @@ class DatabaseHelper private constructor(context: Context) :
     }
 
     override fun onCreate(db: SQLiteDatabase) {
-        // Tạo bảng users
-        val createUsersTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_USERS (
-                $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_NAME TEXT NOT NULL,
-                $COL_EMAIL TEXT NOT NULL UNIQUE,
-                $COL_PHONE TEXT,
-                $COL_PASSWORD TEXT NOT NULL,
-                $COL_GENDER TEXT DEFAULT '',
-                $COL_BIRTHDAY TEXT DEFAULT '',
-                $COL_JOB TEXT DEFAULT ''
-            )
-        """.trimIndent()
-        db.execSQL(createUsersTable)
+        db.execSQL(createUsersTable())
+        db.execSQL(createCartTable())
+        db.execSQL(createOrdersTable())
+        db.execSQL(createOrderItemsTable())
+        db.execSQL(createNotifTable())
+        db.execSQL(createAddressesTable())
+        db.execSQL(createReviewsTable())
+        db.execSQL(createCategoriesTable())
+        db.execSQL(createFoodsTable())
 
-        // Tạo bảng cart_items
-        val createCartTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_CART (
-                $COL_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_CART_USER_ID INTEGER NOT NULL,
-                $COL_CART_FOOD_ID INTEGER NOT NULL,
-                $COL_CART_NAME TEXT NOT NULL,
-                $COL_CART_RESTAURANT TEXT NOT NULL,
-                $COL_CART_EMOJI TEXT,
-                $COL_CART_PRICE INTEGER NOT NULL,
-                $COL_CART_QUANTITY INTEGER NOT NULL,
-                $COL_CART_IMAGE_RES INTEGER DEFAULT 0
-            )
-        """.trimIndent()
-        db.execSQL(createCartTable)
-
-        // Tạo bảng orders
-        val createOrdersTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_ORDERS (
-                $COL_ORDER_ID TEXT PRIMARY KEY,
-                $COL_ORDER_USER_ID INTEGER NOT NULL,
-                $COL_ORDER_RESTAURANT TEXT NOT NULL,
-                $COL_ORDER_CREATED_AT INTEGER NOT NULL,
-                $COL_ORDER_SHIPPING_FEE INTEGER NOT NULL,
-                $COL_ORDER_RECEIVER TEXT NOT NULL,
-                $COL_ORDER_PHONE TEXT NOT NULL,
-                $COL_ORDER_ADDRESS TEXT NOT NULL,
-                $COL_ORDER_PAYMENT TEXT NOT NULL,
-                $COL_ORDER_STATUS TEXT NOT NULL,
-                $COL_ORDER_STEP INTEGER DEFAULT 0
-            )
-        """.trimIndent()
-        db.execSQL(createOrdersTable)
-
-        // Tạo bảng order_items
-        val createOrderItemsTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_ORDER_ITEMS (
-                $COL_OI_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_OI_ORDER_ID TEXT NOT NULL,
-                $COL_OI_FOOD_ID INTEGER NOT NULL,
-                $COL_OI_NAME TEXT NOT NULL,
-                $COL_OI_RESTAURANT TEXT NOT NULL,
-                $COL_OI_EMOJI TEXT,
-                $COL_OI_PRICE INTEGER NOT NULL,
-                $COL_OI_QUANTITY INTEGER NOT NULL,
-                $COL_OI_IMAGE_RES INTEGER DEFAULT 0
-            )
-        """.trimIndent()
-        db.execSQL(createOrderItemsTable)
-
-        // Tạo bảng notifications
-        val createNotifTable = """
-            CREATE TABLE IF NOT EXISTS $TABLE_NOTIFICATIONS (
-                $COL_NOTIF_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                $COL_NOTIF_USER_ID INTEGER NOT NULL,
-                $COL_NOTIF_TYPE TEXT NOT NULL,
-                $COL_NOTIF_EMOJI TEXT NOT NULL,
-                $COL_NOTIF_TITLE TEXT NOT NULL,
-                $COL_NOTIF_MESSAGE TEXT NOT NULL,
-                $COL_NOTIF_TIME INTEGER NOT NULL,
-                $COL_NOTIF_IS_READ INTEGER DEFAULT 0,
-                $COL_NOTIF_ORDER_ID TEXT,
-                $COL_NOTIF_PROMO_CODE TEXT
-            )
-        """.trimIndent()
-        db.execSQL(createNotifTable)
-
-        // Tài khoản mẫu mặc định
+        // Tài khoản mẫu mặc định người dùng
         val defaultUser = ContentValues().apply {
             put(COL_NAME, "Trường Thanh Toàn")
             put(COL_EMAIL, "truong@email.com")
@@ -191,76 +172,284 @@ class DatabaseHelper private constructor(context: Context) :
             put(COL_GENDER, "Nam")
             put(COL_BIRTHDAY, "01/01/2000")
             put(COL_JOB, "Lập trình viên")
+            put(COL_ROLE, "user")
         }
         db.insert(TABLE_USERS, null, defaultUser)
+
+        // Tài khoản Admin hệ thống
+        val adminUser = ContentValues().apply {
+            put(COL_NAME, "Quản trị viên FoodHub")
+            put(COL_EMAIL, "admin@foodhub.com")
+            put(COL_PHONE, "1900 1234")
+            put(COL_PASSWORD, "123456")
+            put(COL_GENDER, "Nam")
+            put(COL_BIRTHDAY, "01/01/1990")
+            put(COL_JOB, "Quản lý hệ thống")
+            put(COL_ROLE, "admin")
+        }
+        db.insert(TABLE_USERS, null, adminUser)
+
+        seedInitialCategories(db)
+        seedInitialFoods(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (oldVersion < 2) {
-            val createCartTable = """
-                CREATE TABLE IF NOT EXISTS $TABLE_CART (
-                    $COL_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    $COL_CART_USER_ID INTEGER NOT NULL,
-                    $COL_CART_FOOD_ID INTEGER NOT NULL,
-                    $COL_CART_NAME TEXT NOT NULL,
-                    $COL_CART_RESTAURANT TEXT NOT NULL,
-                    $COL_CART_EMOJI TEXT,
-                    $COL_CART_PRICE INTEGER NOT NULL,
-                    $COL_CART_QUANTITY INTEGER NOT NULL,
-                    $COL_CART_IMAGE_RES INTEGER DEFAULT 0
-                )
-            """.trimIndent()
-            db.execSQL(createCartTable)
+        try {
+            // Đảm bảo tất cả bảng cần thiết luôn tồn tại
+            db.execSQL(createUsersTable())
+            db.execSQL(createCartTable())
+            db.execSQL(createOrdersTable())
+            db.execSQL(createOrderItemsTable())
+            db.execSQL(createNotifTable())
+            db.execSQL(createAddressesTable())
+            db.execSQL(createReviewsTable())
+            db.execSQL(createCategoriesTable())
+            db.execSQL(createFoodsTable())
 
-            val createOrdersTable = """
-                CREATE TABLE IF NOT EXISTS $TABLE_ORDERS (
-                    $COL_ORDER_ID TEXT PRIMARY KEY,
-                    $COL_ORDER_USER_ID INTEGER NOT NULL,
-                    $COL_ORDER_RESTAURANT TEXT NOT NULL,
-                    $COL_ORDER_CREATED_AT INTEGER NOT NULL,
-                    $COL_ORDER_SHIPPING_FEE INTEGER NOT NULL,
-                    $COL_ORDER_RECEIVER TEXT NOT NULL,
-                    $COL_ORDER_PHONE TEXT NOT NULL,
-                    $COL_ORDER_ADDRESS TEXT NOT NULL,
-                    $COL_ORDER_PAYMENT TEXT NOT NULL,
-                    $COL_ORDER_STATUS TEXT NOT NULL,
-                    $COL_ORDER_STEP INTEGER DEFAULT 0
-                )
-            """.trimIndent()
-            db.execSQL(createOrdersTable)
+            // Thêm các cột nếu phiên bản cũ chưa có
+            addColumnIfMissing(db, TABLE_USERS, COL_ROLE, "TEXT DEFAULT 'user'")
+            addColumnIfMissing(db, TABLE_CART, COL_CART_NOTE, "TEXT DEFAULT ''")
+            addColumnIfMissing(db, TABLE_CART, COL_CART_IMAGE_RES, "INTEGER DEFAULT 0")
+            addColumnIfMissing(db, TABLE_ORDER_ITEMS, COL_OI_NOTE, "TEXT DEFAULT ''")
+            addColumnIfMissing(db, TABLE_ORDER_ITEMS, COL_OI_IMAGE_RES, "INTEGER DEFAULT 0")
+            addColumnIfMissing(db, TABLE_ORDERS, COL_ORDER_NOTE, "TEXT DEFAULT ''")
+            addColumnIfMissing(db, TABLE_ORDERS, COL_ORDER_VOUCHER, "TEXT DEFAULT ''")
+            addColumnIfMissing(db, TABLE_ORDERS, COL_ORDER_DISCOUNT, "INTEGER DEFAULT 0")
+            addColumnIfMissing(db, TABLE_FOODS, COL_FOOD_IMAGE_RES, "INTEGER DEFAULT 0")
 
-            val createOrderItemsTable = """
-                CREATE TABLE IF NOT EXISTS $TABLE_ORDER_ITEMS (
-                    $COL_OI_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    $COL_OI_ORDER_ID TEXT NOT NULL,
-                    $COL_OI_FOOD_ID INTEGER NOT NULL,
-                    $COL_OI_NAME TEXT NOT NULL,
-                    $COL_OI_RESTAURANT TEXT NOT NULL,
-                    $COL_OI_EMOJI TEXT,
-                    $COL_OI_PRICE INTEGER NOT NULL,
-                    $COL_OI_QUANTITY INTEGER NOT NULL,
-                    $COL_OI_IMAGE_RES INTEGER DEFAULT 0
-                )
-            """.trimIndent()
-            db.execSQL(createOrderItemsTable)
+            // Seed admin account nếu chưa có
+            try {
+                val cursorAdmin = db.query(TABLE_USERS, arrayOf(COL_ID), "$COL_EMAIL = ?", arrayOf("admin@foodhub.com"), null, null, null)
+                if (!cursorAdmin.moveToFirst()) {
+                    val adminUser = ContentValues().apply {
+                        put(COL_NAME, "Quản trị viên FoodHub")
+                        put(COL_EMAIL, "admin@foodhub.com")
+                        put(COL_PHONE, "1900 1234")
+                        put(COL_PASSWORD, "123456")
+                        put(COL_GENDER, "Nam")
+                        put(COL_BIRTHDAY, "01/01/1990")
+                        put(COL_JOB, "Quản lý hệ thống")
+                        put(COL_ROLE, "admin")
+                    }
+                    db.insert(TABLE_USERS, null, adminUser)
+                } else {
+                    val cv = ContentValues().apply { put(COL_ROLE, "admin") }
+                    db.update(TABLE_USERS, cv, "$COL_EMAIL = ?", arrayOf("admin@foodhub.com"))
+                }
+                cursorAdmin.close()
+            } catch (_: Exception) {}
+
+            try {
+                seedInitialCategories(db)
+            } catch (_: Exception) {}
+
+            try {
+                seedInitialFoods(db)
+            } catch (_: Exception) {}
+
+            // Cập nhật lại ID ảnh mới cho danh sách món mặc định
+            SampleData.DEFAULT_FOODS.forEach { f ->
+                try {
+                    val cv = ContentValues().apply {
+                        put(COL_FOOD_IMAGE_RES, f.imageRes)
+                    }
+                    db.update(TABLE_FOODS, cv, "$COL_FOOD_ID = ?", arrayOf(f.id.toString()))
+                } catch (_: Exception) {}
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
+    }
 
-        if (oldVersion < 3) {
-            val createNotifTable = """
-                CREATE TABLE IF NOT EXISTS $TABLE_NOTIFICATIONS (
-                    $COL_NOTIF_ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    $COL_NOTIF_USER_ID INTEGER NOT NULL,
-                    $COL_NOTIF_TYPE TEXT NOT NULL,
-                    $COL_NOTIF_EMOJI TEXT NOT NULL,
-                    $COL_NOTIF_TITLE TEXT NOT NULL,
-                    $COL_NOTIF_MESSAGE TEXT NOT NULL,
-                    $COL_NOTIF_TIME INTEGER NOT NULL,
-                    $COL_NOTIF_IS_READ INTEGER DEFAULT 0,
-                    $COL_NOTIF_ORDER_ID TEXT,
-                    $COL_NOTIF_PROMO_CODE TEXT
-                )
-            """.trimIndent()
-            db.execSQL(createNotifTable)
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        // Tránh crash nếu downgrade
+    }
+
+    private fun createUsersTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_USERS (
+            $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_NAME TEXT NOT NULL,
+            $COL_EMAIL TEXT UNIQUE NOT NULL,
+            $COL_PHONE TEXT,
+            $COL_PASSWORD TEXT NOT NULL,
+            $COL_GENDER TEXT,
+            $COL_BIRTHDAY TEXT,
+            $COL_JOB TEXT,
+            $COL_ROLE TEXT DEFAULT 'user'
+        )
+    """.trimIndent()
+
+    private fun createCartTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_CART (
+            $COL_CART_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_CART_USER_ID INTEGER NOT NULL,
+            $COL_CART_FOOD_ID INTEGER NOT NULL,
+            $COL_CART_NAME TEXT NOT NULL,
+            $COL_CART_RESTAURANT TEXT NOT NULL,
+            $COL_CART_EMOJI TEXT,
+            $COL_CART_PRICE INTEGER NOT NULL,
+            $COL_CART_QUANTITY INTEGER NOT NULL,
+            $COL_CART_IMAGE_RES INTEGER DEFAULT 0,
+            $COL_CART_NOTE TEXT DEFAULT ''
+        )
+    """.trimIndent()
+
+    private fun createOrdersTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_ORDERS (
+            $COL_ORDER_ID TEXT PRIMARY KEY,
+            $COL_ORDER_USER_ID INTEGER NOT NULL,
+            $COL_ORDER_RESTAURANT TEXT NOT NULL,
+            $COL_ORDER_CREATED_AT INTEGER NOT NULL,
+            $COL_ORDER_SHIPPING_FEE INTEGER NOT NULL,
+            $COL_ORDER_RECEIVER TEXT NOT NULL,
+            $COL_ORDER_PHONE TEXT NOT NULL,
+            $COL_ORDER_ADDRESS TEXT NOT NULL,
+            $COL_ORDER_PAYMENT TEXT NOT NULL,
+            $COL_ORDER_STATUS TEXT NOT NULL,
+            $COL_ORDER_STEP INTEGER DEFAULT 0,
+            $COL_ORDER_NOTE TEXT DEFAULT '',
+            $COL_ORDER_VOUCHER TEXT DEFAULT '',
+            $COL_ORDER_DISCOUNT INTEGER DEFAULT 0
+        )
+    """.trimIndent()
+
+    private fun createOrderItemsTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_ORDER_ITEMS (
+            $COL_OI_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_OI_ORDER_ID TEXT NOT NULL,
+            $COL_OI_FOOD_ID INTEGER NOT NULL,
+            $COL_OI_NAME TEXT NOT NULL,
+            $COL_OI_RESTAURANT TEXT NOT NULL,
+            $COL_OI_EMOJI TEXT,
+            $COL_OI_PRICE INTEGER NOT NULL,
+            $COL_OI_QUANTITY INTEGER NOT NULL,
+            $COL_OI_IMAGE_RES INTEGER DEFAULT 0,
+            $COL_OI_NOTE TEXT DEFAULT ''
+        )
+    """.trimIndent()
+
+    private fun createNotifTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_NOTIFICATIONS (
+            $COL_NOTIF_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_NOTIF_USER_ID INTEGER NOT NULL,
+            $COL_NOTIF_TYPE TEXT NOT NULL,
+            $COL_NOTIF_EMOJI TEXT NOT NULL,
+            $COL_NOTIF_TITLE TEXT NOT NULL,
+            $COL_NOTIF_MESSAGE TEXT NOT NULL,
+            $COL_NOTIF_TIME INTEGER NOT NULL,
+            $COL_NOTIF_IS_READ INTEGER DEFAULT 0,
+            $COL_NOTIF_ORDER_ID TEXT,
+            $COL_NOTIF_PROMO_CODE TEXT
+        )
+    """.trimIndent()
+
+    /** Câu lệnh tạo bảng addresses (dùng cho cả onCreate và onUpgrade). */
+    private fun createAddressesTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_ADDRESSES (
+            $COL_ADDR_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_ADDR_USER_ID INTEGER NOT NULL,
+            $COL_ADDR_LABEL TEXT NOT NULL,
+            $COL_ADDR_RECEIVER TEXT NOT NULL,
+            $COL_ADDR_PHONE TEXT NOT NULL,
+            $COL_ADDR_ADDRESS TEXT NOT NULL,
+            $COL_ADDR_IS_DEFAULT INTEGER DEFAULT 0
+        )
+    """.trimIndent()
+
+    /** Câu lệnh tạo bảng reviews (dùng cho cả onCreate và onUpgrade). */
+    private fun createReviewsTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_REVIEWS (
+            $COL_REVIEW_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_REVIEW_USER_ID INTEGER NOT NULL,
+            $COL_REVIEW_ORDER_ID TEXT NOT NULL,
+            $COL_REVIEW_RESTAURANT TEXT NOT NULL,
+            $COL_REVIEW_STARS INTEGER NOT NULL,
+            $COL_REVIEW_COMMENT TEXT DEFAULT '',
+            $COL_REVIEW_CREATED_AT INTEGER NOT NULL
+        )
+    """.trimIndent()
+
+    /** Bảng danh mục món ăn (categories). */
+    private fun createCategoriesTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_CATEGORIES (
+            $COL_CAT_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+            $COL_CAT_NAME TEXT UNIQUE NOT NULL
+        )
+    """.trimIndent()
+
+    /** Bảng danh sách món ăn (foods). */
+    private fun createFoodsTable(): String = """
+        CREATE TABLE IF NOT EXISTS $TABLE_FOODS (
+            $COL_FOOD_ID INTEGER PRIMARY KEY,
+            $COL_FOOD_NAME TEXT NOT NULL,
+            $COL_FOOD_RESTAURANT TEXT NOT NULL,
+            $COL_FOOD_RATING REAL DEFAULT 5.0,
+            $COL_FOOD_REVIEWS INTEGER DEFAULT 0,
+            $COL_FOOD_PRICE TEXT NOT NULL,
+            $COL_FOOD_CATEGORY TEXT NOT NULL,
+            $COL_FOOD_EMOJI TEXT DEFAULT '🍲',
+            $COL_FOOD_BG_START INTEGER DEFAULT 0,
+            $COL_FOOD_BG_END INTEGER DEFAULT 0,
+            $COL_FOOD_IMAGE_RES INTEGER DEFAULT 0
+        )
+    """.trimIndent()
+
+    private fun seedInitialCategories(db: SQLiteDatabase) {
+        val countCursor = db.rawQuery("SELECT COUNT(*) FROM $TABLE_CATEGORIES", null)
+        val count = if (countCursor.moveToFirst()) countCursor.getInt(0) else 0
+        countCursor.close()
+        if (count == 0) {
+            listOf("Cơm", "Phở", "Bánh mì", "Gà rán", "Mì", "Đồ uống").forEach { cat ->
+                val cv = ContentValues().apply { put(COL_CAT_NAME, cat) }
+                db.insertWithOnConflict(TABLE_CATEGORIES, null, cv, SQLiteDatabase.CONFLICT_IGNORE)
+            }
+        }
+    }
+
+    private fun seedInitialFoods(db: SQLiteDatabase) {
+        val countCursor = db.rawQuery("SELECT COUNT(*) FROM $TABLE_FOODS", null)
+        val count = if (countCursor.moveToFirst()) countCursor.getInt(0) else 0
+        countCursor.close()
+        if (count == 0) {
+            SampleData.DEFAULT_FOODS.forEach { f ->
+                val cv = ContentValues().apply {
+                    put(COL_FOOD_ID, f.id)
+                    put(COL_FOOD_NAME, f.name)
+                    put(COL_FOOD_RESTAURANT, f.restaurant)
+                    put(COL_FOOD_RATING, f.rating)
+                    put(COL_FOOD_REVIEWS, f.reviews)
+                    put(COL_FOOD_PRICE, f.price)
+                    put(COL_FOOD_CATEGORY, f.category)
+                    put(COL_FOOD_EMOJI, f.emoji)
+                    put(COL_FOOD_BG_START, f.bgColorStart)
+                    put(COL_FOOD_BG_END, f.bgColorEnd)
+                    put(COL_FOOD_IMAGE_RES, f.imageRes)
+                }
+                db.insertWithOnConflict(TABLE_FOODS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+            }
+        }
+    }
+
+    /**
+     * Thêm cột mới nếu bảng chưa có cột đó (tránh lỗi khi nâng cấp nhiều lần).
+     */
+    private fun addColumnIfMissing(
+        db: SQLiteDatabase,
+        table: String,
+        column: String,
+        definition: String
+    ) {
+        val cursor = db.rawQuery("PRAGMA table_info($table)", null)
+        var exists = false
+        while (cursor.moveToNext()) {
+            if (cursor.getString(1) == column) {
+                exists = true
+                break
+            }
+        }
+        cursor.close()
+        if (!exists) {
+            db.execSQL("ALTER TABLE $table ADD COLUMN $column $definition")
         }
     }
 
@@ -279,6 +468,7 @@ class DatabaseHelper private constructor(context: Context) :
             put(COL_GENDER, user.gender)
             put(COL_BIRTHDAY, user.birthday)
             put(COL_JOB, user.job)
+            put(COL_ROLE, if (user.role.isNotEmpty()) user.role else "user")
         }
         return db.insert(TABLE_USERS, null, values)
     }
@@ -356,6 +546,13 @@ class DatabaseHelper private constructor(context: Context) :
         return rows > 0
     }
 
+    fun updateUserPassword(userId: Long, newPass: String): Boolean {
+        if (userId <= 0) return false
+        val db = writableDatabase
+        val cv = ContentValues().apply { put(COL_PASSWORD, newPass) }
+        return db.update(TABLE_USERS, cv, "$COL_ID = ?", arrayOf(userId.toString())) > 0
+    }
+
     private fun cursorToUser(cursor: Cursor): User {
         val id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID))
         val name = cursor.getString(cursor.getColumnIndexOrThrow(COL_NAME))
@@ -365,6 +562,8 @@ class DatabaseHelper private constructor(context: Context) :
         val gender = cursor.getString(cursor.getColumnIndexOrThrow(COL_GENDER)) ?: ""
         val birthday = cursor.getString(cursor.getColumnIndexOrThrow(COL_BIRTHDAY)) ?: ""
         val job = cursor.getString(cursor.getColumnIndexOrThrow(COL_JOB)) ?: ""
+        val roleIndex = cursor.getColumnIndex(COL_ROLE)
+        val role = if (roleIndex >= 0) cursor.getString(roleIndex) ?: "user" else "user"
 
         return User(
             id = id,
@@ -374,7 +573,8 @@ class DatabaseHelper private constructor(context: Context) :
             password = password,
             gender = gender,
             birthday = birthday,
-            job = job
+            job = job,
+            role = role
         )
     }
 
@@ -406,6 +606,10 @@ class DatabaseHelper private constructor(context: Context) :
             val price = cursor.getInt(cursor.getColumnIndexOrThrow(COL_CART_PRICE))
             val quantity = cursor.getInt(cursor.getColumnIndexOrThrow(COL_CART_QUANTITY))
             val imageRes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_CART_IMAGE_RES))
+            val noteIndex = cursor.getColumnIndex(COL_CART_NOTE)
+            val note = if (noteIndex >= 0) cursor.getString(noteIndex) ?: "" else ""
+
+            val actualImageRes = SampleData.resolveFoodImage(foodId, name, imageRes)
 
             list.add(
                 CartItem(
@@ -415,7 +619,8 @@ class DatabaseHelper private constructor(context: Context) :
                     emoji = emoji,
                     price = price,
                     quantity = quantity,
-                    imageRes = imageRes
+                    imageRes = actualImageRes,
+                    note = note
                 )
             )
         }
@@ -424,8 +629,86 @@ class DatabaseHelper private constructor(context: Context) :
     }
 
     /**
-     * Thêm hoặc cập nhật số lượng món trong giỏ hàng vào SQLite cho user_id.
+     * Thêm món vào giỏ hàng hoặc tăng số lượng nếu đã có món cùng ghi chú.
      */
+    fun addToCart(userId: Long, item: CartItem) {
+        if (userId <= 0) return
+        val db = writableDatabase
+
+        // Tìm món cùng food_id và cùng ghi chú
+        val cursor = db.query(
+            TABLE_CART,
+            arrayOf(COL_CART_ID, COL_CART_QUANTITY),
+            "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ? AND $COL_CART_NOTE = ?",
+            arrayOf(userId.toString(), item.foodId.toString(), item.note),
+            null,
+            null,
+            null
+        )
+
+        if (cursor.moveToFirst()) {
+            val cartId = cursor.getLong(cursor.getColumnIndexOrThrow(COL_CART_ID))
+            val curQty = cursor.getInt(cursor.getColumnIndexOrThrow(COL_CART_QUANTITY))
+            val newQty = curQty + item.quantity
+
+            val values = ContentValues().apply {
+                put(COL_CART_QUANTITY, newQty)
+            }
+            db.update(TABLE_CART, values, "$COL_CART_ID = ?", arrayOf(cartId.toString()))
+        } else {
+            val actualImageRes = SampleData.resolveFoodImage(item.foodId, item.name, item.imageRes)
+            val values = ContentValues().apply {
+                put(COL_CART_USER_ID, userId)
+                put(COL_CART_FOOD_ID, item.foodId)
+                put(COL_CART_NAME, item.name)
+                put(COL_CART_RESTAURANT, item.restaurant)
+                put(COL_CART_EMOJI, item.emoji)
+                put(COL_CART_PRICE, item.price)
+                put(COL_CART_QUANTITY, item.quantity)
+                put(COL_CART_IMAGE_RES, actualImageRes)
+                put(COL_CART_NOTE, item.note)
+            }
+            db.insert(TABLE_CART, null, values)
+        }
+        cursor.close()
+    }
+
+    fun updateCartQuantity(userId: Long, foodId: Int, newQuantity: Int) {
+        if (userId <= 0) return
+        val db = writableDatabase
+        if (newQuantity <= 0) {
+            db.delete(
+                TABLE_CART,
+                "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ?",
+                arrayOf(userId.toString(), foodId.toString())
+            )
+        } else {
+            val values = ContentValues().apply {
+                put(COL_CART_QUANTITY, newQuantity)
+            }
+            db.update(
+                TABLE_CART,
+                values,
+                "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ?",
+                arrayOf(userId.toString(), foodId.toString())
+            )
+        }
+    }
+
+    fun removeFromCart(userId: Long, foodId: Int) {
+        if (userId <= 0) return
+        val db = writableDatabase
+        db.delete(
+            TABLE_CART,
+            "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ?",
+            arrayOf(userId.toString(), foodId.toString())
+        )
+    }
+
+    fun removeCartItem(userId: Long, foodId: Int) {
+        removeFromCart(userId, foodId)
+    }
+
     fun saveOrUpdateCartItem(userId: Long, item: CartItem) {
         if (userId <= 0) return
         val db = writableDatabase
@@ -438,9 +721,7 @@ class DatabaseHelper private constructor(context: Context) :
             null,
             null
         )
-        val exists = cursor.moveToFirst()
-        cursor.close()
-
+        val actualImageRes = SampleData.resolveFoodImage(item.foodId, item.name, item.imageRes)
         val values = ContentValues().apply {
             put(COL_CART_USER_ID, userId)
             put(COL_CART_FOOD_ID, item.foodId)
@@ -449,37 +730,18 @@ class DatabaseHelper private constructor(context: Context) :
             put(COL_CART_EMOJI, item.emoji)
             put(COL_CART_PRICE, item.price)
             put(COL_CART_QUANTITY, item.quantity)
-            put(COL_CART_IMAGE_RES, item.imageRes)
+            put(COL_CART_IMAGE_RES, actualImageRes)
+            put(COL_CART_NOTE, item.note)
         }
-
-        if (exists) {
-            db.update(
-                TABLE_CART,
-                values,
-                "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ?",
-                arrayOf(userId.toString(), item.foodId.toString())
-            )
+        if (cursor.moveToFirst()) {
+            val cartId = cursor.getLong(cursor.getColumnIndexOrThrow(COL_CART_ID))
+            db.update(TABLE_CART, values, "$COL_CART_ID = ?", arrayOf(cartId.toString()))
         } else {
             db.insert(TABLE_CART, null, values)
         }
+        cursor.close()
     }
 
-    /**
-     * Xóa 1 món khỏi giỏ hàng trong SQLite.
-     */
-    fun removeCartItem(userId: Long, foodId: Int) {
-        if (userId <= 0) return
-        val db = writableDatabase
-        db.delete(
-            TABLE_CART,
-            "$COL_CART_USER_ID = ? AND $COL_CART_FOOD_ID = ?",
-            arrayOf(userId.toString(), foodId.toString())
-        )
-    }
-
-    /**
-     * Xóa sạch giỏ hàng của user_id (sau khi thanh toán đặt hàng thành công).
-     */
     fun clearCart(userId: Long) {
         if (userId <= 0) return
         val db = writableDatabase
@@ -487,14 +749,14 @@ class DatabaseHelper private constructor(context: Context) :
     }
 
     // =========================================================================
-    // 3. QUẢN LÝ ĐƠN HÀNG (ORDERS & ORDER_ITEMS) THEO TỪNG USER_ID
+    // 3. QUẢN LÝ ĐƠN HÀNG THEO TỪNG USER_ID
     // =========================================================================
 
     /**
-     * Lưu 1 đơn hàng mới và danh sách món của đơn hàng vào SQLite.
+     * Thêm đơn hàng mới và toàn bộ món chi tiết vào SQLite theo userId.
      */
-    fun insertOrder(userId: Long, order: Order) {
-        if (userId <= 0) return
+    fun insertOrder(userId: Long, order: Order): Boolean {
+        if (userId <= 0) return false
         val db = writableDatabase
         db.beginTransaction()
         try {
@@ -510,13 +772,15 @@ class DatabaseHelper private constructor(context: Context) :
                 put(COL_ORDER_PAYMENT, order.paymentMethod)
                 put(COL_ORDER_STATUS, order.status.name)
                 put(COL_ORDER_STEP, order.processStep)
+                put(COL_ORDER_NOTE, order.orderNote)
+                put(COL_ORDER_VOUCHER, order.voucherCode)
+                put(COL_ORDER_DISCOUNT, order.discount)
             }
-            db.insertWithOnConflict(TABLE_ORDERS, null, orderValues, SQLiteDatabase.CONFLICT_REPLACE)
-
-            // Đảm bảo không trùng lặp các món khi cập nhật/lưu lại đơn hàng
-            db.delete(TABLE_ORDER_ITEMS, "$COL_OI_ORDER_ID = ?", arrayOf(order.id))
+            val res = db.insert(TABLE_ORDERS, null, orderValues)
+            if (res == -1L) return false
 
             order.items.forEach { item ->
+                val actualImageRes = SampleData.resolveFoodImage(item.foodId, item.name, item.imageRes)
                 val itemValues = ContentValues().apply {
                     put(COL_OI_ORDER_ID, order.id)
                     put(COL_OI_FOOD_ID, item.foodId)
@@ -525,74 +789,25 @@ class DatabaseHelper private constructor(context: Context) :
                     put(COL_OI_EMOJI, item.emoji)
                     put(COL_OI_PRICE, item.price)
                     put(COL_OI_QUANTITY, item.quantity)
-                    put(COL_OI_IMAGE_RES, item.imageRes)
+                    put(COL_OI_IMAGE_RES, actualImageRes)
+                    put(COL_OI_NOTE, item.note)
                 }
                 db.insert(TABLE_ORDER_ITEMS, null, itemValues)
             }
             db.setTransactionSuccessful()
+            return true
         } finally {
             db.endTransaction()
         }
     }
 
     /**
-     * Tự động xóa các đơn hàng cũ hơn số ngày quy định (mặc định 3 ngày).
-     * Xóa đồng bộ cả bảng orders và order_items.
+     * Lấy toàn bộ đơn hàng của userId hiện tại từ SQLite (sắp xếp mới nhất trước).
      */
-    fun cleanOrdersOlderThan(days: Int = 3, userId: Long? = null): Int {
-        val db = writableDatabase
-        val threshold = System.currentTimeMillis() - (days.toLong() * 24 * 60 * 60 * 1000L)
-        val selection = if (userId != null && userId > 0) {
-            "$COL_ORDER_CREATED_AT < ? AND $COL_ORDER_USER_ID = ?"
-        } else {
-            "$COL_ORDER_CREATED_AT < ?"
-        }
-        val selectionArgs = if (userId != null && userId > 0) {
-            arrayOf(threshold.toString(), userId.toString())
-        } else {
-            arrayOf(threshold.toString())
-        }
-
-        val cursor = db.query(
-            TABLE_ORDERS,
-            arrayOf(COL_ORDER_ID),
-            selection,
-            selectionArgs,
-            null, null, null
-        )
-        val expiredIds = mutableListOf<String>()
-        while (cursor.moveToNext()) {
-            expiredIds.add(cursor.getString(0))
-        }
-        cursor.close()
-
-        if (expiredIds.isEmpty()) return 0
-
-        db.beginTransaction()
-        try {
-            expiredIds.forEach { orderId ->
-                db.delete(TABLE_ORDER_ITEMS, "$COL_OI_ORDER_ID = ?", arrayOf(orderId))
-                db.delete(TABLE_ORDERS, "$COL_ORDER_ID = ?", arrayOf(orderId))
-            }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
-        }
-        return expiredIds.size
-    }
-
-    /**
-     * Lấy toàn bộ đơn hàng của user_id từ SQLite (chỉ giữ đơn hàng trong vòng 3 ngày).
-     */
-    fun getOrdersForUser(userId: Long): List<Order> {
-        val orders = mutableListOf<Order>()
-        if (userId <= 0) return orders
-
-        // Tự động dọn dẹp các đơn hàng quá 3 ngày
-        cleanOrdersOlderThan(3, userId)
-
+    fun getOrders(userId: Long): List<Order> {
+        val list = mutableListOf<Order>()
+        if (userId <= 0) return list
         val db = readableDatabase
-
         val cursor = db.query(
             TABLE_ORDERS,
             null,
@@ -602,7 +817,6 @@ class DatabaseHelper private constructor(context: Context) :
             null,
             "$COL_ORDER_CREATED_AT DESC"
         )
-
         while (cursor.moveToNext()) {
             val orderId = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_ID))
             val restaurant = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_RESTAURANT))
@@ -613,7 +827,13 @@ class DatabaseHelper private constructor(context: Context) :
             val address = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_ADDRESS))
             val paymentMethod = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_PAYMENT))
             val statusStr = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_STATUS))
-            val processStep = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ORDER_STEP))
+            val step = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ORDER_STEP))
+            val noteIndex = cursor.getColumnIndex(COL_ORDER_NOTE)
+            val note = if (noteIndex >= 0) cursor.getString(noteIndex) ?: "" else ""
+            val voucherIndex = cursor.getColumnIndex(COL_ORDER_VOUCHER)
+            val voucher = if (voucherIndex >= 0) cursor.getString(voucherIndex) ?: "" else ""
+            val discountIndex = cursor.getColumnIndex(COL_ORDER_DISCOUNT)
+            val discount = if (discountIndex >= 0) cursor.getInt(discountIndex) else 0
 
             val status = try {
                 OrderStatus.valueOf(statusStr)
@@ -621,30 +841,41 @@ class DatabaseHelper private constructor(context: Context) :
                 OrderStatus.PROCESSING
             }
 
-            val items = getItemsForOrder(db, orderId)
+            val items = getOrderItems(orderId)
 
-            orders.add(
+            list.add(
                 Order(
                     id = orderId,
                     restaurant = restaurant,
-                    createdAt = createdAt,
                     items = items,
+                    createdAt = createdAt,
                     shippingFee = shippingFee,
                     receiverName = receiverName,
                     phone = phone,
                     address = address,
                     paymentMethod = paymentMethod,
                     status = status,
-                    processStep = processStep
+                    processStep = step,
+                    orderNote = note,
+                    voucherCode = voucher,
+                    discount = discount
                 )
             )
         }
         cursor.close()
-        return orders
+        return list
     }
 
-    private fun getItemsForOrder(db: SQLiteDatabase, orderId: String): List<CartItem> {
+    fun getOrdersForUser(userId: Long): List<Order> = getOrders(userId)
+
+    fun getOrderById(orderId: String): Order? = getAllOrders().find { it.id == orderId }
+
+    /**
+     * Lấy toàn bộ chi tiết món của 1 mã đơn hàng từ SQLite.
+     */
+    fun getOrderItems(orderId: String): List<CartItem> {
         val items = mutableListOf<CartItem>()
+        val db = readableDatabase
         val cursor = db.query(
             TABLE_ORDER_ITEMS,
             null,
@@ -662,6 +893,10 @@ class DatabaseHelper private constructor(context: Context) :
             val price = cursor.getInt(cursor.getColumnIndexOrThrow(COL_OI_PRICE))
             val quantity = cursor.getInt(cursor.getColumnIndexOrThrow(COL_OI_QUANTITY))
             val imageRes = cursor.getInt(cursor.getColumnIndexOrThrow(COL_OI_IMAGE_RES))
+            val noteIndex = cursor.getColumnIndex(COL_OI_NOTE)
+            val note = if (noteIndex >= 0) cursor.getString(noteIndex) ?: "" else ""
+
+            val actualImageRes = SampleData.resolveFoodImage(foodId, name, imageRes)
 
             items.add(
                 CartItem(
@@ -671,7 +906,8 @@ class DatabaseHelper private constructor(context: Context) :
                     emoji = emoji,
                     price = price,
                     quantity = quantity,
-                    imageRes = imageRes
+                    imageRes = actualImageRes,
+                    note = note
                 )
             )
         }
@@ -682,35 +918,23 @@ class DatabaseHelper private constructor(context: Context) :
     /**
      * Cập nhật trạng thái tiến trình đơn hàng trong SQLite.
      */
-    fun updateOrderStatus(orderId: String, status: OrderStatus, processStep: Int) {
+    fun updateOrderStatus(orderId: String, status: OrderStatus, step: Int) {
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_ORDER_STATUS, status.name)
-            put(COL_ORDER_STEP, processStep)
+            put(COL_ORDER_STEP, step)
         }
         db.update(TABLE_ORDERS, values, "$COL_ORDER_ID = ?", arrayOf(orderId))
     }
 
-    /**
-     * Hủy đơn hàng trong SQLite.
-     */
-    fun cancelOrder(orderId: String): Boolean {
-        val db = writableDatabase
-        val values = ContentValues().apply {
-            put(COL_ORDER_STATUS, OrderStatus.CANCELLED.name)
-            put(COL_ORDER_STEP, -1)
-        }
-        val rows = db.update(TABLE_ORDERS, values, "$COL_ORDER_ID = ?", arrayOf(orderId))
-        return rows > 0
+    fun cancelOrder(orderId: String) {
+        updateOrderStatus(orderId, OrderStatus.CANCELLED, -1)
     }
 
     // =========================================================================
-    // 4. QUẢN LÝ THÔNG BÁO (NOTIFICATIONS) THEO TỪNG USER_ID
+    // 4. QUẢN LÝ THÔNG BÁO THEO TỪNG USER_ID
     // =========================================================================
 
-    /**
-     * Lưu 1 thông báo mới vào SQLite. Trả về id vừa tạo.
-     */
     fun insertNotification(userId: Long, notif: AppNotification): Long {
         if (userId <= 0) return -1L
         val db = writableDatabase
@@ -728,35 +952,9 @@ class DatabaseHelper private constructor(context: Context) :
         return db.insert(TABLE_NOTIFICATIONS, null, values)
     }
 
-    /**
-     * Tự động xóa các thông báo cũ hơn số ngày quy định (mặc định 3 ngày) khỏi SQLite.
-     */
-    fun cleanNotificationsOlderThan(days: Int = 3, userId: Long? = null): Int {
-        val db = writableDatabase
-        val threshold = System.currentTimeMillis() - (days.toLong() * 24 * 60 * 60 * 1000L)
-        val selection = if (userId != null && userId > 0) {
-            "$COL_NOTIF_TIME < ? AND $COL_NOTIF_USER_ID = ?"
-        } else {
-            "$COL_NOTIF_TIME < ?"
-        }
-        val selectionArgs = if (userId != null && userId > 0) {
-            arrayOf(threshold.toString(), userId.toString())
-        } else {
-            arrayOf(threshold.toString())
-        }
-        return db.delete(TABLE_NOTIFICATIONS, selection, selectionArgs)
-    }
-
-    /**
-     * Lấy toàn bộ thông báo của user_id từ SQLite, sắp xếp mới nhất lên đầu (chỉ giữ trong vòng 3 ngày).
-     */
     fun getNotifications(userId: Long): List<AppNotification> {
         val list = mutableListOf<AppNotification>()
         if (userId <= 0) return list
-
-        // Tự động dọn dẹp các thông báo quá 3 ngày
-        cleanNotificationsOlderThan(3, userId)
-
         val db = readableDatabase
         val cursor = db.query(
             TABLE_NOTIFICATIONS,
@@ -765,7 +963,7 @@ class DatabaseHelper private constructor(context: Context) :
             arrayOf(userId.toString()),
             null,
             null,
-            "$COL_NOTIF_TIME DESC, $COL_NOTIF_ID DESC"
+            "$COL_NOTIF_TIME DESC"
         )
         while (cursor.moveToNext()) {
             val id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_NOTIF_ID))
@@ -781,7 +979,7 @@ class DatabaseHelper private constructor(context: Context) :
             val type = try {
                 NotificationType.valueOf(typeStr)
             } catch (_: Exception) {
-                NotificationType.SYSTEM
+                NotificationType.PROMO
             }
 
             list.add(
@@ -802,84 +1000,565 @@ class DatabaseHelper private constructor(context: Context) :
         return list
     }
 
-    /**
-     * Cập nhật trạng thái đã đọc cho 1 thông báo trong SQLite.
-     */
-    fun markNotificationAsRead(userId: Long, notifId: Long): Boolean {
-        if (userId <= 0) return false
+    fun markNotificationAsRead(userId: Long, notifId: Long) {
+        if (userId <= 0) return
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_NOTIF_IS_READ, 1)
         }
-        val rows = db.update(
+        db.update(
             TABLE_NOTIFICATIONS,
             values,
             "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_ID = ?",
             arrayOf(userId.toString(), notifId.toString())
         )
-        return rows > 0
     }
 
-    /**
-     * Đánh dấu tất cả thông báo là đã đọc trong SQLite (hoặc theo loại).
-     */
-    fun markAllNotificationsAsRead(userId: Long, type: NotificationType?): Boolean {
-        if (userId <= 0) return false
+    fun markAllNotificationsAsRead(userId: Long, type: NotificationType? = null) {
+        if (userId <= 0) return
         val db = writableDatabase
         val values = ContentValues().apply {
             put(COL_NOTIF_IS_READ, 1)
         }
-        val rows = if (type == null) {
-            db.update(
-                TABLE_NOTIFICATIONS,
-                values,
-                "$COL_NOTIF_USER_ID = ?",
-                arrayOf(userId.toString())
-            )
+        val where = if (type == null) {
+            "$COL_NOTIF_USER_ID = ?"
         } else {
-            db.update(
-                TABLE_NOTIFICATIONS,
-                values,
-                "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_TYPE = ?",
-                arrayOf(userId.toString(), type.name)
-            )
+            "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_TYPE = '${type.name}'"
         }
-        return rows > 0
+        db.update(
+            TABLE_NOTIFICATIONS,
+            values,
+            where,
+            arrayOf(userId.toString())
+        )
     }
 
-    /**
-     * Xóa 1 thông báo trong SQLite.
-     */
-    fun deleteNotification(userId: Long, notifId: Long): Boolean {
-        if (userId <= 0) return false
+    fun cleanNotificationsOlderThan(days: Int, userId: Long) {
+        if (userId <= 0) return
         val db = writableDatabase
-        val rows = db.delete(
+        val cutoff = System.currentTimeMillis() - (days * 24L * 60 * 60 * 1000)
+        db.delete(
+            TABLE_NOTIFICATIONS,
+            "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_TIME < ?",
+            arrayOf(userId.toString(), cutoff.toString())
+        )
+    }
+
+    fun deleteNotification(userId: Long, notifId: Long) {
+        if (userId <= 0) return
+        val db = writableDatabase
+        db.delete(
             TABLE_NOTIFICATIONS,
             "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_ID = ?",
             arrayOf(userId.toString(), notifId.toString())
         )
+    }
+
+    fun deleteAllNotifications(userId: Long, type: NotificationType? = null) {
+        if (userId <= 0) return
+        val db = writableDatabase
+        val where = if (type == null) {
+            "$COL_NOTIF_USER_ID = ?"
+        } else {
+            "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_TYPE = '${type.name}'"
+        }
+        db.delete(TABLE_NOTIFICATIONS, where, arrayOf(userId.toString()))
+    }
+
+    fun getUnreadNotificationCount(userId: Long): Int {
+        if (userId <= 0) return 0
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT COUNT(*) FROM $TABLE_NOTIFICATIONS WHERE $COL_NOTIF_USER_ID = ? AND $COL_NOTIF_IS_READ = 0",
+            arrayOf(userId.toString())
+        )
+        val count = if (cursor.moveToFirst()) cursor.getInt(0) else 0
+        cursor.close()
+        return count
+    }
+
+    // =========================================================================
+    // 5. QUẢN LÝ SỔ ĐỊA CHỈ GIAO HÀNG (ADDRESSES)
+    // =========================================================================
+
+    fun getAddresses(userId: Long): List<SavedAddress> {
+        val list = mutableListOf<SavedAddress>()
+        if (userId <= 0) return list
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_ADDRESSES,
+            null,
+            "$COL_ADDR_USER_ID = ?",
+            arrayOf(userId.toString()),
+            null,
+            null,
+            "$COL_ADDR_IS_DEFAULT DESC, $COL_ADDR_ID DESC"
+        )
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ADDR_ID))
+            val label = cursor.getString(cursor.getColumnIndexOrThrow(COL_ADDR_LABEL))
+            val receiver = cursor.getString(cursor.getColumnIndexOrThrow(COL_ADDR_RECEIVER))
+            val phone = cursor.getString(cursor.getColumnIndexOrThrow(COL_ADDR_PHONE))
+            val address = cursor.getString(cursor.getColumnIndexOrThrow(COL_ADDR_ADDRESS))
+            val isDefault = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ADDR_IS_DEFAULT)) == 1
+
+            list.add(
+                SavedAddress(
+                    id = id,
+                    label = label,
+                    receiver = receiver,
+                    phone = phone,
+                    address = address,
+                    isDefault = isDefault
+                )
+            )
+        }
+        cursor.close()
+        return list
+    }
+
+    fun insertAddress(userId: Long, address: SavedAddress): Long {
+        if (userId <= 0) return -1L
+        val db = writableDatabase
+        if (address.isDefault) {
+            val resetValues = ContentValues().apply { put(COL_ADDR_IS_DEFAULT, 0) }
+            db.update(TABLE_ADDRESSES, resetValues, "$COL_ADDR_USER_ID = ?", arrayOf(userId.toString()))
+        }
+        val cv = ContentValues().apply {
+            put(COL_ADDR_USER_ID, userId)
+            put(COL_ADDR_LABEL, address.label)
+            put(COL_ADDR_RECEIVER, address.receiver)
+            put(COL_ADDR_PHONE, address.phone)
+            put(COL_ADDR_ADDRESS, address.address)
+            put(COL_ADDR_IS_DEFAULT, if (address.isDefault) 1 else 0)
+        }
+        return db.insert(TABLE_ADDRESSES, null, cv)
+    }
+
+    fun updateAddress(userId: Long, address: SavedAddress): Boolean {
+        if (userId <= 0) return false
+        val db = writableDatabase
+        if (address.isDefault) {
+            val resetValues = ContentValues().apply { put(COL_ADDR_IS_DEFAULT, 0) }
+            db.update(TABLE_ADDRESSES, resetValues, "$COL_ADDR_USER_ID = ?", arrayOf(userId.toString()))
+        }
+        val cv = ContentValues().apply {
+            put(COL_ADDR_LABEL, address.label)
+            put(COL_ADDR_RECEIVER, address.receiver)
+            put(COL_ADDR_PHONE, address.phone)
+            put(COL_ADDR_ADDRESS, address.address)
+            put(COL_ADDR_IS_DEFAULT, if (address.isDefault) 1 else 0)
+        }
+        val rows = db.update(
+            TABLE_ADDRESSES,
+            cv,
+            "$COL_ADDR_USER_ID = ? AND $COL_ADDR_ID = ?",
+            arrayOf(userId.toString(), address.id.toString())
+        )
         return rows > 0
     }
 
-    /**
-     * Xóa tất cả thông báo trong SQLite (hoặc theo loại).
-     */
-    fun deleteAllNotifications(userId: Long, type: NotificationType?): Boolean {
+    fun setDefaultAddress(userId: Long, addressId: Long): Boolean {
         if (userId <= 0) return false
         val db = writableDatabase
-        val rows = if (type == null) {
-            db.delete(
-                TABLE_NOTIFICATIONS,
-                "$COL_NOTIF_USER_ID = ?",
-                arrayOf(userId.toString())
+        db.beginTransaction()
+        try {
+            val resetValues = ContentValues().apply { put(COL_ADDR_IS_DEFAULT, 0) }
+            db.update(TABLE_ADDRESSES, resetValues, "$COL_ADDR_USER_ID = ?", arrayOf(userId.toString()))
+
+            val setValues = ContentValues().apply { put(COL_ADDR_IS_DEFAULT, 1) }
+            val rows = db.update(
+                TABLE_ADDRESSES,
+                setValues,
+                "$COL_ADDR_USER_ID = ? AND $COL_ADDR_ID = ?",
+                arrayOf(userId.toString(), addressId.toString())
             )
-        } else {
-            db.delete(
-                TABLE_NOTIFICATIONS,
-                "$COL_NOTIF_USER_ID = ? AND $COL_NOTIF_TYPE = ?",
-                arrayOf(userId.toString(), type.name)
+            db.setTransactionSuccessful()
+            return rows > 0
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    fun deleteAddress(userId: Long, addressId: Long): Boolean {
+        if (userId <= 0) return false
+        val db = writableDatabase
+        val rows = db.delete(
+            TABLE_ADDRESSES,
+            "$COL_ADDR_USER_ID = ? AND $COL_ADDR_ID = ?",
+            arrayOf(userId.toString(), addressId.toString())
+        )
+        return rows > 0
+    }
+
+    // =========================================================================
+    // 6. QUẢN LÝ ĐÁNH GIÁ MÓN ĂN & QUÁN (REVIEWS)
+    // =========================================================================
+
+    fun insertReview(userId: Long, review: Review): Long {
+        if (userId <= 0) return -1L
+        val db = writableDatabase
+        val cv = ContentValues().apply {
+            put(COL_REVIEW_USER_ID, userId)
+            put(COL_REVIEW_ORDER_ID, review.orderId)
+            put(COL_REVIEW_RESTAURANT, review.restaurant)
+            put(COL_REVIEW_STARS, review.stars)
+            put(COL_REVIEW_COMMENT, review.comment)
+            put(COL_REVIEW_CREATED_AT, review.createdAt)
+        }
+        return db.insert(TABLE_REVIEWS, null, cv)
+    }
+
+    fun isOrderReviewed(userId: Long, orderId: String): Boolean {
+        if (userId <= 0) return false
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_REVIEWS,
+            arrayOf(COL_REVIEW_ID),
+            "$COL_REVIEW_USER_ID = ? AND $COL_REVIEW_ORDER_ID = ?",
+            arrayOf(userId.toString(), orderId),
+            null,
+            null,
+            null
+        )
+        val exists = cursor.moveToFirst()
+        cursor.close()
+        return exists
+    }
+
+    fun hasReview(userId: Long, orderId: String): Boolean = isOrderReviewed(userId, orderId)
+
+    fun getReviewForOrder(userId: Long, orderId: String): Review? {
+        if (userId <= 0) return null
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_REVIEWS,
+            null,
+            "$COL_REVIEW_USER_ID = ? AND $COL_REVIEW_ORDER_ID = ?",
+            arrayOf(userId.toString(), orderId),
+            null,
+            null,
+            null
+        )
+        var review: Review? = null
+        if (cursor.moveToFirst()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_REVIEW_ID))
+            val restaurant = cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEW_RESTAURANT))
+            val stars = cursor.getInt(cursor.getColumnIndexOrThrow(COL_REVIEW_STARS))
+            val comment = cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEW_COMMENT))
+            val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(COL_REVIEW_CREATED_AT))
+            review = Review(id, orderId, restaurant, stars, comment, createdAt)
+        }
+        cursor.close()
+        return review
+    }
+
+    fun avgRatingForRestaurant(restaurant: String): Pair<Double, Int> {
+        val db = readableDatabase
+        val cursor = db.rawQuery(
+            "SELECT AVG($COL_REVIEW_STARS), COUNT(*) FROM $TABLE_REVIEWS WHERE $COL_REVIEW_RESTAURANT = ?",
+            arrayOf(restaurant)
+        )
+        var avg = 5.0
+        var count = 0
+        if (cursor.moveToFirst()) {
+            val rawAvg = cursor.getDouble(0)
+            count = cursor.getInt(1)
+            if (count > 0 && rawAvg > 0) {
+                avg = rawAvg
+            }
+        }
+        cursor.close()
+        return Pair(avg, count)
+    }
+
+    fun getReviews(userId: Long): List<Review> {
+        val list = mutableListOf<Review>()
+        if (userId <= 0) return list
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_REVIEWS,
+            null,
+            "$COL_REVIEW_USER_ID = ?",
+            arrayOf(userId.toString()),
+            null,
+            null,
+            "$COL_REVIEW_CREATED_AT DESC"
+        )
+        while (cursor.moveToNext()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_REVIEW_ID))
+            val orderId = cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEW_ORDER_ID))
+            val restaurant = cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEW_RESTAURANT))
+            val stars = cursor.getInt(cursor.getColumnIndexOrThrow(COL_REVIEW_STARS))
+            val comment = cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEW_COMMENT))
+            val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(COL_REVIEW_CREATED_AT))
+
+            list.add(
+                Review(
+                    id = id,
+                    orderId = orderId,
+                    restaurant = restaurant,
+                    stars = stars,
+                    comment = comment,
+                    createdAt = createdAt
+                )
             )
         }
+        cursor.close()
+        return list
+    }
+
+    // =========================================================================
+    // 7. QUẢN TRỊ ADMIN - TẤT CẢ ĐƠN HÀNG HỆ THỐNG
+    // =========================================================================
+
+    /** Admin: Lấy toàn bộ đơn hàng của tất cả người dùng trong hệ thống */
+    fun getAllOrders(): List<Order> {
+        val list = mutableListOf<Order>()
+        val db = readableDatabase
+        val cursor = db.query(
+            TABLE_ORDERS,
+            null,
+            null,
+            null,
+            null,
+            null,
+            "$COL_ORDER_CREATED_AT DESC"
+        )
+        while (cursor.moveToNext()) {
+            val orderId = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_ID))
+            val restaurant = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_RESTAURANT))
+            val createdAt = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ORDER_CREATED_AT))
+            val shippingFee = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ORDER_SHIPPING_FEE))
+            val receiverName = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_RECEIVER))
+            val phone = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_PHONE))
+            val address = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_ADDRESS))
+            val paymentMethod = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_PAYMENT))
+            val statusStr = cursor.getString(cursor.getColumnIndexOrThrow(COL_ORDER_STATUS))
+            val step = cursor.getInt(cursor.getColumnIndexOrThrow(COL_ORDER_STEP))
+            val noteIndex = cursor.getColumnIndex(COL_ORDER_NOTE)
+            val note = if (noteIndex >= 0) cursor.getString(noteIndex) ?: "" else ""
+            val voucherIndex = cursor.getColumnIndex(COL_ORDER_VOUCHER)
+            val voucher = if (voucherIndex >= 0) cursor.getString(voucherIndex) ?: "" else ""
+            val discountIndex = cursor.getColumnIndex(COL_ORDER_DISCOUNT)
+            val discount = if (discountIndex >= 0) cursor.getInt(discountIndex) else 0
+
+            val status = try {
+                OrderStatus.valueOf(statusStr)
+            } catch (_: Exception) {
+                OrderStatus.PROCESSING
+            }
+
+            val items = getOrderItems(orderId)
+
+            list.add(
+                Order(
+                    id = orderId,
+                    restaurant = restaurant,
+                    items = items,
+                    createdAt = createdAt,
+                    shippingFee = shippingFee,
+                    receiverName = receiverName,
+                    phone = phone,
+                    address = address,
+                    paymentMethod = paymentMethod,
+                    status = status,
+                    processStep = step,
+                    orderNote = note,
+                    voucherCode = voucher,
+                    discount = discount
+                )
+            )
+        }
+        cursor.close()
+        return list
+    }
+
+    // =========================================================================
+    // 8. QUẢN TRỊ ADMIN - DANH MỤC MÓN ĂN (CATEGORIES)
+    // =========================================================================
+
+    /** Lấy toàn bộ tên danh mục hiện có từ SQLite. */
+    fun getAllCategories(): List<String> {
+        val list = mutableListOf<String>()
+        try {
+            val db = readableDatabase
+            db.execSQL(createCategoriesTable())
+            val cursor = db.query(TABLE_CATEGORIES, arrayOf(COL_CAT_NAME), null, null, null, null, "$COL_CAT_ID ASC")
+            while (cursor.moveToNext()) {
+                list.add(cursor.getString(0))
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        if (list.isEmpty()) {
+            list.addAll(listOf("Cơm", "Phở", "Bánh mì", "Gà rán", "Mì", "Đồ uống"))
+        }
+        return list
+    }
+
+    /** Thêm danh mục mới vào hệ thống. */
+    fun insertCategory(name: String): Long {
+        val clean = name.trim()
+        if (clean.isEmpty()) return -1L
+        val db = writableDatabase
+        val cv = ContentValues().apply { put(COL_CAT_NAME, clean) }
+        return db.insertWithOnConflict(TABLE_CATEGORIES, null, cv, SQLiteDatabase.CONFLICT_IGNORE)
+    }
+
+    /** Sửa tên danh mục và cập nhật luôn toàn bộ món đang thuộc danh mục đó. */
+    fun updateCategory(oldName: String, newName: String): Boolean {
+        val clean = newName.trim()
+        if (clean.isEmpty()) return false
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val cvCat = ContentValues().apply { put(COL_CAT_NAME, clean) }
+            val rows = db.update(TABLE_CATEGORIES, cvCat, "$COL_CAT_NAME = ?", arrayOf(oldName))
+            if (rows > 0) {
+                val cvFood = ContentValues().apply { put(COL_FOOD_CATEGORY, clean) }
+                db.update(TABLE_FOODS, cvFood, "$COL_FOOD_CATEGORY = ?", arrayOf(oldName))
+                db.setTransactionSuccessful()
+                return true
+            }
+            return false
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    /** Xóa danh mục và chuyển các món thuộc danh mục đó về 'Khác'. */
+    fun deleteCategory(name: String): Boolean {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            val rows = db.delete(TABLE_CATEGORIES, "$COL_CAT_NAME = ?", arrayOf(name))
+            if (rows > 0) {
+                val cvFood = ContentValues().apply { put(COL_FOOD_CATEGORY, "Khác") }
+                db.update(TABLE_FOODS, cvFood, "$COL_FOOD_CATEGORY = ?", arrayOf(name))
+                db.setTransactionSuccessful()
+                return true
+            }
+            return false
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    // =========================================================================
+    // 9. QUẢN TRỊ ADMIN - MÓN ĂN HỆ THỐNG (FOODS)
+    // =========================================================================
+
+    /** Lấy toàn bộ món ăn hệ thống từ SQLite. */
+    fun getAllFoods(): List<Food> {
+        val list = mutableListOf<Food>()
+        try {
+            val db = readableDatabase
+            db.execSQL(createFoodsTable())
+            val cursor = db.query(TABLE_FOODS, null, null, null, null, null, "$COL_FOOD_ID ASC")
+            while (cursor.moveToNext()) {
+                val idCol = cursor.getColumnIndex(COL_FOOD_ID)
+                val nameCol = cursor.getColumnIndex(COL_FOOD_NAME)
+                val restCol = cursor.getColumnIndex(COL_FOOD_RESTAURANT)
+                val ratingCol = cursor.getColumnIndex(COL_FOOD_RATING)
+                val reviewsCol = cursor.getColumnIndex(COL_FOOD_REVIEWS)
+                val priceCol = cursor.getColumnIndex(COL_FOOD_PRICE)
+                val catCol = cursor.getColumnIndex(COL_FOOD_CATEGORY)
+                val emojiCol = cursor.getColumnIndex(COL_FOOD_EMOJI)
+                val bgStartCol = cursor.getColumnIndex(COL_FOOD_BG_START)
+                val bgEndCol = cursor.getColumnIndex(COL_FOOD_BG_END)
+                val imgCol = cursor.getColumnIndex(COL_FOOD_IMAGE_RES)
+
+                val id = if (idCol >= 0) cursor.getInt(idCol) else 0
+                val name = if (nameCol >= 0) cursor.getString(nameCol) else ""
+                val restaurant = if (restCol >= 0) cursor.getString(restCol) else ""
+                val rating = if (ratingCol >= 0) cursor.getDouble(ratingCol) else 5.0
+                val reviews = if (reviewsCol >= 0) cursor.getInt(reviewsCol) else 0
+                val price = if (priceCol >= 0) cursor.getString(priceCol) else "0đ"
+                val category = if (catCol >= 0) cursor.getString(catCol) else ""
+                val emoji = if (emojiCol >= 0) cursor.getString(emojiCol) ?: "🍲" else "🍲"
+                val bgStart = if (bgStartCol >= 0) cursor.getInt(bgStartCol) else 0
+                val bgEnd = if (bgEndCol >= 0) cursor.getInt(bgEndCol) else 0
+                val imageRes = if (imgCol >= 0) cursor.getInt(imgCol) else 0
+
+                val actualImageRes = SampleData.resolveFoodImage(id, name, imageRes)
+
+                list.add(
+                    Food(
+                        id = id,
+                        name = name,
+                        restaurant = restaurant,
+                        rating = rating,
+                        reviews = reviews,
+                        price = price,
+                        category = category,
+                        emoji = emoji,
+                        bgColorStart = bgStart,
+                        bgColorEnd = bgEnd,
+                        imageRes = actualImageRes
+                    )
+                )
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return if (list.isNotEmpty()) list else SampleData.DEFAULT_FOODS
+    }
+
+    /** Tạo ID tự tăng tiếp theo cho món ăn mới. */
+    fun getNextFoodId(): Int {
+        val db = readableDatabase
+        val cursor = db.rawQuery("SELECT MAX($COL_FOOD_ID) FROM $TABLE_FOODS", null)
+        var maxId = 0
+        if (cursor.moveToNext()) {
+            maxId = cursor.getInt(0)
+        }
+        cursor.close()
+        return maxOf(maxId + 1, 100)
+    }
+
+    /** Thêm món ăn mới vào hệ thống. */
+    fun insertFood(food: Food): Long {
+        val db = writableDatabase
+        val actualImageRes = SampleData.resolveFoodImage(food.id, food.name, food.imageRes)
+        val cv = ContentValues().apply {
+            put(COL_FOOD_ID, food.id)
+            put(COL_FOOD_NAME, food.name)
+            put(COL_FOOD_RESTAURANT, food.restaurant)
+            put(COL_FOOD_RATING, food.rating)
+            put(COL_FOOD_REVIEWS, food.reviews)
+            put(COL_FOOD_PRICE, food.price)
+            put(COL_FOOD_CATEGORY, food.category)
+            put(COL_FOOD_EMOJI, food.emoji)
+            put(COL_FOOD_BG_START, food.bgColorStart)
+            put(COL_FOOD_BG_END, food.bgColorEnd)
+            put(COL_FOOD_IMAGE_RES, actualImageRes)
+        }
+        return db.insertWithOnConflict(TABLE_FOODS, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    /** Cập nhật thông tin món ăn. */
+    fun updateFood(food: Food): Boolean {
+        val db = writableDatabase
+        val actualImageRes = SampleData.resolveFoodImage(food.id, food.name, food.imageRes)
+        val cv = ContentValues().apply {
+            put(COL_FOOD_NAME, food.name)
+            put(COL_FOOD_RESTAURANT, food.restaurant)
+            put(COL_FOOD_PRICE, food.price)
+            put(COL_FOOD_CATEGORY, food.category)
+            put(COL_FOOD_EMOJI, food.emoji)
+            put(COL_FOOD_IMAGE_RES, actualImageRes)
+        }
+        val rows = db.update(TABLE_FOODS, cv, "$COL_FOOD_ID = ?", arrayOf(food.id.toString()))
+        return rows > 0
+    }
+
+    /** Xóa món ăn khỏi hệ thống. */
+    fun deleteFood(foodId: Int): Boolean {
+        val db = writableDatabase
+        val rows = db.delete(TABLE_FOODS, "$COL_FOOD_ID = ?", arrayOf(foodId.toString()))
         return rows > 0
     }
 }

@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Roof triangular pediment -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M12,2 L2,7 L22,7 Z" />
+    <!-- Roof base line -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M3,8 L21,8 L21,9.5 L3,9.5 Z" />
+    <!-- Pillars -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M4.5,10.5 L6.5,10.5 L6.5,17.5 L4.5,17.5 Z
+                         M9,10.5 L11,10.5 L11,17.5 L9,17.5 Z
+                         M13,10.5 L15,10.5 L15,17.5 L13,17.5 Z
+                         M17.5,10.5 L19.5,10.5 L19.5,17.5 L17.5,17.5 Z" />
+    <!-- Foundation / base steps -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M2,18.5 L22,18.5 L22,20 L2,20 Z
+                         M1,20.5 L23,20.5 L23,22 L1,22 Z" />
+</vector>

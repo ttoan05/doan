@@ -11,6 +11,7 @@ import com.example.foodhub.R
 import com.example.foodhub.data.model.CartItem
 import com.example.foodhub.data.model.OrderStatus
 import com.example.foodhub.utils.FormatUtils
+import com.example.foodhub.utils.SampleData
 
 /** Các hàm dùng chung cho danh sách đơn hàng và chi tiết đơn hàng. */
 object OrderUi {
@@ -40,8 +41,9 @@ object OrderUi {
         val ivImage = line.findViewById<ImageView>(R.id.ivLineImage)
         val tvEmoji = line.findViewById<TextView>(R.id.tvLineEmoji)
 
-        if (item.imageRes != 0) {
-            ivImage.setImageResource(item.imageRes)
+        val actualImgRes = SampleData.resolveFoodImage(item.foodId, item.name, item.imageRes)
+        if (actualImgRes != 0) {
+            ivImage.setImageResource(actualImgRes)
             ivImage.visibility = View.VISIBLE
             tvEmoji.visibility = View.GONE
         } else {
@@ -50,8 +52,15 @@ object OrderUi {
             tvEmoji.text = item.emoji
         }
 
-        line.findViewById<TextView>(R.id.tvLineName).text = "${item.name} x${item.quantity}"
+        val nameWithNote = if (item.note.isNotBlank()) {
+            "${item.name} x${item.quantity}\n📝 ${item.note}"
+        } else {
+            "${item.name} x${item.quantity}"
+        }
+
+        line.findViewById<TextView>(R.id.tvLineName).text = nameWithNote
         line.findViewById<TextView>(R.id.tvLinePrice).text = FormatUtils.money(item.price)
+
         container.addView(line)
     }
 }

@@ -88,17 +88,31 @@ object OrderManager {
         receiverName: String,
         phone: String,
         address: String,
-        paymentMethod: String
+        paymentMethod: String,
+        orderNote: String = "",
+        voucherCode: String = "",
+        discount: Int = 0
     ): List<Order> {
         val created = mutableListOf<Order>()
         val now = System.currentTimeMillis()
         val ctx = appContext
         val uid = if (currentUserId > 0) currentUserId else UserProfileManager.currentUserId
 
-        cartItems.groupBy { it.restaurant }.forEach { (restaurant, list) ->
+        val grouped = cartItems.groupBy { it.restaurant }
+        var remainingDiscount = discount
+
+        grouped.forEach { (restaurant, list) ->
             val copies = list.map { it.copy() }
             val subtotal = copies.sumOf { it.total }
             val orderId = generateOrderId()
+
+            val orderDiscount = if (grouped.size == 1) {
+                discount
+            } else {
+                val share = minOf(remainingDiscount, subtotal)
+                remainingDiscount -= share
+                share
+            }
 
             val order = Order(
                 id = orderId,
@@ -111,7 +125,10 @@ object OrderManager {
                 address = address,
                 paymentMethod = paymentMethod,
                 status = OrderStatus.PROCESSING,
-                processStep = 0
+                processStep = 0,
+                orderNote = orderNote,
+                voucherCode = if (orderDiscount > 0 || voucherCode.isNotEmpty()) voucherCode else "",
+                discount = orderDiscount
             )
 
             orders.add(0, order)
@@ -214,7 +231,7 @@ object OrderManager {
 
         add(
             "Quán Phở Tuyệt", now - 30 * minute,
-            listOf(CartItem(1, "Phở bò đặc biệt", "Quán Phở Tuyệt", "🍜", 45_000, 2)),
+            listOf(CartItem(1, "Phở bò đặc biệt", "Quán Phở Tuyệt", "🍲", 45_000, 2)),
             "Thanh toán khi nhận hàng (COD)", OrderStatus.PROCESSING, 1
         )
         add(

@@ -19,10 +19,22 @@
         <activity android:name=".ui.home.MainActivity"/>
         <activity android:name=".ui.account.AccountActivity"/>
         <activity android:name=".ui.account.UserInfoActivity"/>
+        <activity android:name=".ui.address.AddressActivity"/>
+        <activity android:name=".ui.settings.SettingsActivity"/>
+        <activity android:name=".ui.voucher.VoucherActivity"/>
+        <activity android:name=".ui.restaurant.RestaurantDetailActivity"/>
         <activity android:name=".ui.product.ProductDetailActivity"/>
         <activity android:name=".ui.order.OrderDetailActivity"/>
         <activity android:name=".ui.cart.CartActivity"/>
         <activity android:name=".ui.checkout.CheckoutActivity"
+            android:windowSoftInputMode="adjustResize"/>
+
+        <!-- Các màn hình Quản trị Admin -->
+        <activity android:name=".ui.admin.AdminFoodActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.admin.AdminCategoryActivity"
+            android:windowSoftInputMode="adjustResize"/>
+        <activity android:name=".ui.admin.AdminOrderActivity"
             android:windowSoftInputMode="adjustResize"/>
 
     </application>

@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Thêm địa chỉ nhận hàng"
+        android:textColor="#111827"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp"
+        android:text="Loại địa chỉ"
+        android:textColor="#374151"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- Radio / Category Row -->
+    <RadioGroup
+        android:id="@+id/rgLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbHome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:checked="true"
+            android:text="Nhà"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbWork"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Công ty"
+            android:textSize="14sp" />
+
+        <RadioButton
+            android:id="@+id/rbOther"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Khác"
+            android:textSize="14sp" />
+    </RadioGroup>
+
+    <!-- Address Input -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        android:text="Địa chỉ *"
+        android:textColor="#374151"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etAddress"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_field"
+        android:hint="Ví dụ: cantho, hoặc Số nhà, tên đường..."
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="#111827"
+        android:textSize="14sp" />
+
+    <!-- Receiver Name Input -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        android:text="Người nhận *"
+        android:textColor="#374151"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etReceiver"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_field"
+        android:hint="Họ và tên người nhận"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="#111827"
+        android:textSize="14sp" />
+
+    <!-- Phone Number Input -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="4dp"
+        android:text="Số điện thoại *"
+        android:textColor="#374151"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/etPhone"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_field"
+        android:hint="Số điện thoại liên hệ"
+        android:inputType="phone"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="#111827"
+        android:textSize="14sp" />
+
+    <!-- Default Checkbox -->
+    <CheckBox
+        android:id="@+id/cbIsDefault"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:buttonTint="#EF4444"
+        android:checked="true"
+        android:text="Đặt làm địa chỉ nhận hàng mặc định"
+        android:textColor="#374151"
+        android:textSize="13sp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnCancel"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_btn_gray"
+            android:text="Hủy"
+            android:textColor="#4B5563"
+            android:textSize="14sp" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_btn_red"
+            android:text="Lưu địa chỉ"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>

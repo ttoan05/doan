@@ -48,10 +48,10 @@ object CartManager {
 
     fun isEmpty(): Boolean = items.isEmpty()
 
-    fun addFood(food: Food) {
+    fun addFood(food: Food, quantity: Int = 1, note: String = "") {
         val existing = items.find { it.foodId == food.id }
         if (existing != null) {
-            existing.quantity++
+            existing.quantity += quantity
             syncItemToDb(existing)
         } else {
             val newItem = CartItem(
@@ -60,8 +60,9 @@ object CartManager {
                 restaurant = food.restaurant,
                 emoji = food.emoji,
                 price = FormatUtils.parsePrice(food.price),
-                quantity = 1,
-                imageRes = food.imageRes
+                quantity = quantity,
+                imageRes = food.imageRes,
+                note = note.trim()
             )
             items.add(newItem)
             syncItemToDb(newItem)

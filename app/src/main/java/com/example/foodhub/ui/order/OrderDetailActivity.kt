@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -13,9 +14,12 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodhub.R
 import com.example.foodhub.data.CartManager
+import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.OrderManager
+import com.example.foodhub.data.ReviewStore
 import com.example.foodhub.data.model.Order
 import com.example.foodhub.data.model.OrderStatus
+import com.example.foodhub.data.model.Review
 import com.example.foodhub.ui.cart.CartActivity
 import com.example.foodhub.utils.FormatUtils
 
@@ -46,6 +50,7 @@ class OrderDetailActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btnCancelOrder).setOnClickListener { confirmCancel() }
         findViewById<Button>(R.id.btnReorderDetail).setOnClickListener { reorder() }
+        findViewById<Button>(R.id.btnWriteReview).setOnClickListener { showReviewDialog() }
 
         bind()
     }
@@ -64,7 +69,7 @@ class OrderDetailActivity : AppCompatActivity() {
 
     // ─── Hiển thị dữ liệu ──────────────────────────────
     private fun bind() {
-        val order = OrderManager.findById(orderId)
+        val order = OrderManager.findById(orderId) ?: DatabaseHelper.getInstance(this).getOrderById(orderId)
         if (order == null) {
             finish()
             return
@@ -82,12 +87,43 @@ class OrderDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvDetailSubtotal).text = FormatUtils.money(order.subtotal)
         findViewById<TextView>(R.id.tvDetailShipping).text =
             if (order.shippingFee == 0) "Miễn phí" else FormatUtils.money(order.shippingFee)
+
+        // Hiển thị chiết khấu voucher nếu có
+        val llDiscount = findViewById<LinearLayout>(R.id.llDetailDiscountRow)
+        val tvDiscount = findViewById<TextView>(R.id.tvDetailDiscount)
+        val tvDiscountLabel = findViewById<TextView>(R.id.tvDetailDiscountLabel)
+        if (order.discount > 0) {
+            llDiscount.visibility = View.VISIBLE
+            val labelText = if (order.voucherCode.isNotEmpty()) {
+                "Giảm giá voucher (${order.voucherCode})"
+            } else {
+                "Giảm giá voucher"
+            }
+            tvDiscountLabel.text = labelText
+            tvDiscount.text = "-${FormatUtils.money(order.discount)}"
+        } else {
+            llDiscount.visibility = View.GONE
+        }
+
         findViewById<TextView>(R.id.tvDetailTotal).text = FormatUtils.money(order.total)
 
         findViewById<TextView>(R.id.tvDetailReceiver).text = order.receiverName
         findViewById<TextView>(R.id.tvDetailPhone).text = order.phone
         findViewById<TextView>(R.id.tvDetailAddress).text = order.address
         findViewById<TextView>(R.id.tvDetailPayment).text = order.paymentMethod
+
+        // Ghi chú đơn hàng
+        val llNote = findViewById<LinearLayout>(R.id.llDetailOrderNote)
+        val tvNote = findViewById<TextView>(R.id.tvDetailOrderNote)
+        if (order.orderNote.isNotBlank()) {
+            llNote.visibility = View.VISIBLE
+            tvNote.text = order.orderNote
+        } else {
+            llNote.visibility = View.GONE
+        }
+
+        // Đánh giá đơn hàng (Review)
+        bindReviewSection(order)
 
         // Nút phía dưới
         val btnCancel = findViewById<Button>(R.id.btnCancelOrder)
@@ -98,104 +134,201 @@ class OrderDetailActivity : AppCompatActivity() {
             if (order.canCancel() || order.canReorder()) View.VISIBLE else View.GONE
     }
 
-    private fun bindItems(order: Order) {
-        val container = findViewById<LinearLayout>(R.id.llDetailItems)
-        container.removeAllViews()
-        order.items.forEach { OrderUi.addItemLine(container, it) }
+    private fun bindReviewSection(order: Order) {
+        val llReview = findViewById<LinearLayout>(R.id.llReviewCard)
+        val tvStars = findViewById<TextView>(R.id.tvReviewStars)
+        val tvComment = findViewById<TextView>(R.id.tvReviewComment)
+        val btnWriteReview = findViewById<Button>(R.id.btnWriteReview)
+
+        // Chỉ hiển thị khu vực đánh giá khi đơn hàng đã giao thành công
+        if (order.status != OrderStatus.DELIVERED) {
+            llReview.visibility = View.GONE
+            return
+        }
+
+        llReview.visibility = View.VISIBLE
+        val existingReview = ReviewStore.getForOrder(this, order.id)
+
+        if (existingReview != null) {
+            tvStars.visibility = View.VISIBLE
+            tvStars.text = "⭐️".repeat(existingReview.stars) + " (${existingReview.stars}/5)"
+            if (existingReview.comment.isNotBlank()) {
+                tvComment.visibility = View.VISIBLE
+                tvComment.text = "\"${existingReview.comment}\""
+            } else {
+                tvComment.visibility = View.GONE
+            }
+            btnWriteReview.visibility = View.GONE
+        } else {
+            tvStars.visibility = View.VISIBLE
+            tvStars.text = "Bạn chưa đánh giá đơn hàng này"
+            tvComment.visibility = View.GONE
+            btnWriteReview.visibility = View.VISIBLE
+        }
     }
 
+    private fun showReviewDialog() {
+        val order = OrderManager.findById(orderId) ?: DatabaseHelper.getInstance(this).getOrderById(orderId) ?: return
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(40, 24, 40, 24)
+        }
+
+        val tvTitle = TextView(this).apply {
+            text = "Bạn đánh giá món ăn từ ${order.restaurant} như thế nào?"
+            textSize = 14f
+            setTextColor(Color.parseColor("#4B5563"))
+            setPadding(0, 0, 0, 16)
+        }
+        container.addView(tvTitle)
+
+        // 5 ngôi sao tương tác
+        var selectedStars = 5
+        val starsLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, 8, 0, 16)
+        }
+        val starViews = mutableListOf<TextView>()
+
+        fun updateStarDisplay() {
+            starViews.forEachIndexed { index, tv ->
+                tv.text = if (index < selectedStars) "⭐️" else "☆"
+            }
+        }
+
+        for (i in 1..5) {
+            val tvStar = TextView(this).apply {
+                text = "⭐️"
+                textSize = 32f
+                setPadding(8, 0, 8, 0)
+                setOnClickListener {
+                    selectedStars = i
+                    updateStarDisplay()
+                }
+            }
+            starViews.add(tvStar)
+            starsLayout.addView(tvStar)
+        }
+        container.addView(starsLayout)
+
+        val etComment = EditText(this).apply {
+            hint = "Nhập cảm nhận của bạn về món ăn, thái độ giao hàng... (không bắt buộc)"
+            textSize = 14f
+            minLines = 3
+            setBackgroundResource(R.drawable.bg_field)
+            setPadding(20, 20, 20, 20)
+        }
+        container.addView(etComment)
+
+        AlertDialog.Builder(this)
+            .setTitle("Đánh giá món ăn")
+            .setView(container)
+            .setPositiveButton("Gửi đánh giá") { _, _ ->
+                val comment = etComment.text.toString().trim()
+                ReviewStore.addReview(
+                    this,
+                    Review(
+                        orderId = order.id,
+                        restaurant = order.restaurant,
+                        stars = selectedStars,
+                        comment = comment,
+                        createdAt = System.currentTimeMillis()
+                    )
+                )
+                Toast.makeText(this, "Cảm ơn bạn đã đánh giá ${selectedStars} sao! ❤️", Toast.LENGTH_SHORT).show()
+                bind()
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+    // ─── Thanh tiến trình 5 bước ───────────────────────
     private fun bindProgress(order: Order) {
         val container = findViewById<LinearLayout>(R.id.llProgress)
         container.removeAllViews()
 
-        val red = getColor(R.color.red_primary)
-        val grey = getColor(R.color.text_grey)
-        val dark = getColor(R.color.text_dark)
-        val lineGrey = getColor(R.color.border_grey)
+        val currentStep = order.progressStep()
+        val isCancelled = currentStep == -1
 
-        // Đơn đã hủy: chỉ hiển thị "Đã hủy"
-        if (order.status == OrderStatus.CANCELLED) {
-            val row = LayoutInflater.from(this).inflate(R.layout.item_order_step, container, false)
-            val dot = row.findViewById<TextView>(R.id.tvStepDot)
-            dot.text = "✕"
-            dot.setBackgroundResource(R.drawable.bg_step_done)
-            row.findViewById<View>(R.id.vStepLine).visibility = View.GONE
-            val label = row.findViewById<TextView>(R.id.tvStepLabel)
-            label.text = "Đã hủy"
-            label.setTextColor(red)
-            label.setTypeface(null, android.graphics.Typeface.BOLD)
-            container.addView(row)
-            return
-        }
+        val inflater = LayoutInflater.from(this)
 
-        val current = order.progressStep()
+        steps.forEachIndexed { index, name ->
+            val stepView = inflater.inflate(R.layout.item_order_step, container, false)
+            val tvDot = stepView.findViewById<TextView>(R.id.tvStepDot)
+            val tvLabel = stepView.findViewById<TextView>(R.id.tvStepLabel)
+            val vLine = stepView.findViewById<View>(R.id.vStepLine)
 
-        steps.forEachIndexed { index, title ->
-            val row = LayoutInflater.from(this).inflate(R.layout.item_order_step, container, false)
-            val dot = row.findViewById<TextView>(R.id.tvStepDot)
-            val line = row.findViewById<View>(R.id.vStepLine)
-            val label = row.findViewById<TextView>(R.id.tvStepLabel)
-
-            label.text = title
-
-            if (index <= current) {
-                // Bước đã xong hoặc đang ở bước này
-                dot.setBackgroundResource(R.drawable.bg_step_done)
-                dot.text = if (index < current || order.status == OrderStatus.DELIVERED) "✓" else ""
-                label.setTextColor(if (index == current) red else dark)
-                label.setTypeface(
-                    null,
-                    if (index == current) android.graphics.Typeface.BOLD
-                    else android.graphics.Typeface.NORMAL
-                )
-            } else {
-                // Bước chưa tới
-                dot.setBackgroundResource(R.drawable.bg_step_pending)
-                dot.text = ""
-                label.setTextColor(grey)
-                label.setTypeface(null, android.graphics.Typeface.NORMAL)
-            }
+            tvLabel.text = name
 
             if (index == steps.size - 1) {
-                line.visibility = View.GONE
+                vLine.visibility = View.INVISIBLE
             } else {
-                line.setBackgroundColor(if (index < current) red else lineGrey)
+                vLine.visibility = View.VISIBLE
             }
 
-            container.addView(row)
+            when {
+                isCancelled -> {
+                    tvDot.text = "✕"
+                    tvDot.setBackgroundResource(R.drawable.bg_step_pending)
+                    tvLabel.setTextColor(Color.parseColor("#9E9E9E"))
+                    vLine.setBackgroundColor(Color.parseColor("#E0E0E0"))
+                }
+                index < currentStep -> {
+                    tvDot.text = "✓"
+                    tvDot.setBackgroundResource(R.drawable.bg_step_done)
+                    tvLabel.setTextColor(Color.parseColor("#1B1B1B"))
+                    vLine.setBackgroundColor(Color.parseColor("#E63946"))
+                }
+                index == currentStep -> {
+                    tvDot.text = "${index + 1}"
+                    tvDot.setBackgroundResource(R.drawable.bg_step_done)
+                    tvLabel.setTextColor(Color.parseColor("#E63946"))
+                    vLine.setBackgroundColor(Color.parseColor("#E0E0E0"))
+                }
+                else -> {
+                    tvDot.text = "${index + 1}"
+                    tvDot.setBackgroundResource(R.drawable.bg_step_pending)
+                    tvLabel.setTextColor(Color.parseColor("#9E9E9E"))
+                    vLine.setBackgroundColor(Color.parseColor("#E0E0E0"))
+                }
+            }
+
+            container.addView(stepView)
         }
     }
 
-    // ─── Hủy đơn ───────────────────────────────────────
-    private fun confirmCancel() {
-        val order = OrderManager.findById(orderId) ?: return
-        if (!order.canCancel()) {
-            Toast.makeText(this, "Đơn hàng này không thể hủy", Toast.LENGTH_SHORT).show()
-            return
+    // ─── Danh sách món đã đặt ─────────────────────────
+    private fun bindItems(order: Order) {
+        val container = findViewById<LinearLayout>(R.id.llDetailItems)
+        container.removeAllViews()
+        order.items.forEach { item ->
+            OrderUi.addItemLine(container, item)
         }
+    }
 
+    // ─── Thao tác người dùng ──────────────────────────
+    private fun confirmCancel() {
         AlertDialog.Builder(this)
-            .setTitle("Hủy đơn hàng")
-            .setMessage("Bạn có chắc chắn muốn hủy đơn ${order.code} không?")
+            .setTitle("Xác nhận hủy đơn")
+            .setMessage("Bạn có chắc chắn muốn hủy đơn hàng này không?")
             .setPositiveButton("Hủy đơn") { _, _ ->
-                if (OrderManager.cancel(orderId)) {
-                    Toast.makeText(this, "Đã hủy đơn ${order.code}", Toast.LENGTH_SHORT).show()
+                val ok = OrderManager.cancel(orderId)
+                if (ok) {
+                    Toast.makeText(this, "Đã hủy đơn hàng", Toast.LENGTH_SHORT).show()
                     bind()
+                } else {
+                    Toast.makeText(this, "Không thể hủy đơn hàng này", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Không", null)
             .show()
     }
 
-    // ─── Đặt lại ───────────────────────────────────────
     private fun reorder() {
-        val order = OrderManager.findById(orderId) ?: return
+        val order = OrderManager.findById(orderId) ?: DatabaseHelper.getInstance(this).getOrderById(orderId) ?: return
         CartManager.addItems(order.items)
-        Toast.makeText(
-            this,
-            "Đã thêm ${order.totalQuantity} món vào giỏ hàng",
-            Toast.LENGTH_SHORT
-        ).show()
+        Toast.makeText(this, "Đã thêm lại các món vào giỏ hàng", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, CartActivity::class.java))
     }
 }

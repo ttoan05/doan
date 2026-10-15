@@ -21,6 +21,7 @@ import com.example.foodhub.data.NotificationStore
 import com.example.foodhub.data.OrderManager
 import com.example.foodhub.data.UserProfileManager
 import com.example.foodhub.ui.home.MainActivity
+import com.example.foodhub.utils.SampleData
 
 class LoginActivity : AppCompatActivity() {
 
@@ -50,6 +51,13 @@ class LoginActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
+        // Nạp cơ sở dữ liệu danh mục & món ăn
+        try {
+            SampleData.reloadFromDb(this)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+
         etEmail         = findViewById(R.id.etEmail)
         etPassword      = findViewById(R.id.etPassword)
         cbRemember      = findViewById(R.id.cbRemember)
@@ -72,7 +80,7 @@ class LoginActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvForgot).setOnClickListener {
             Toast.makeText(
                 this,
-                "Tài khoản mẫu: truong@email.com / MK: 123456\nHoặc bạn hãy bấm 'Đăng kí ngay' để tạo tài khoản mới.",
+                "👑 Tài khoản Admin: admin@foodhub.com / MK: 123456\n👤 Tài khoản Người dùng: truong@email.com / MK: 123456\nHoặc bạn hãy bấm 'Đăng kí ngay' để tạo tài khoản mới.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -170,7 +178,8 @@ class LoginActivity : AppCompatActivity() {
                 apply()
             }
 
-            Toast.makeText(this, "Đăng nhập thành công! Chào mừng ${user.name}", Toast.LENGTH_SHORT).show()
+            val roleLabel = if (UserProfileManager.isAdmin) " [Admin]" else ""
+            Toast.makeText(this, "Đăng nhập thành công! Chào mừng ${user.name}$roleLabel", Toast.LENGTH_SHORT).show()
 
             startActivity(Intent(this, MainActivity::class.java))
             finish()

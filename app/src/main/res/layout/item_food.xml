@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:layout_margin="6dp"
     android:background="@drawable/bg_card"
-    android:layout_margin="6dp">
+    android:orientation="vertical">
 
     <!-- Hình món ăn + nút tim -->
     <FrameLayout
@@ -15,14 +16,14 @@
             android:id="@+id/ivFoodImage"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:contentDescription="Hình món ăn"/>
+            android:contentDescription="Hình món ăn"
+            android:scaleType="centerCrop" />
 
         <TextView
             android:id="@+id/tvFoodEmoji"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:visibility="gone"/>
+            android:visibility="gone" />
 
         <ImageView
             android:id="@+id/ivFoodHeart"
@@ -30,10 +31,10 @@
             android:layout_height="32dp"
             android:layout_gravity="top|end"
             android:layout_margin="8dp"
-            android:padding="7dp"
             android:background="@drawable/bg_heart"
-            android:src="@drawable/ic_heart_outline"
-            android:contentDescription="Yêu thích"/>
+            android:contentDescription="Yêu thích"
+            android:padding="7dp"
+            android:src="@drawable/ic_heart_outline" />
     </FrameLayout>
 
     <!-- Nội dung -->
@@ -49,61 +50,61 @@
             android:id="@+id/tvFoodName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_dark"
-            android:singleLine="true"
+            android:layout_marginBottom="2dp"
             android:ellipsize="end"
-            android:layout_marginBottom="2dp"/>
+            android:singleLine="true"
+            android:textColor="@color/text_dark"
+            android:textSize="13sp"
+            android:textStyle="bold" />
 
         <!-- Nhà hàng -->
         <TextView
             android:id="@+id/tvFoodRestaurant"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="11sp"
-            android:textColor="@color/text_grey"
-            android:singleLine="true"
+            android:layout_marginBottom="6dp"
             android:ellipsize="end"
-            android:layout_marginBottom="6dp"/>
+            android:singleLine="true"
+            android:textColor="@color/text_grey"
+            android:textSize="11sp" />
 
         <!-- Đánh giá -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="6dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="6dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="⭐"
-                android:textSize="12sp"/>
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvRating"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:layout_marginStart="3dp"
                 android:textColor="@color/text_grey2"
-                android:layout_marginStart="3dp"/>
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvReviews"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="11sp"
+                android:layout_marginStart="3dp"
                 android:textColor="#AAAAAA"
-                android:layout_marginStart="3dp"/>
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- GIÁ + NÚT THÊM -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <!-- Giá -->
             <TextView
@@ -111,27 +112,28 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:textColor="@color/red_primary"
                 android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="@color/red_primary"/>
+                android:textStyle="bold" />
 
-            <!-- Nút + Thêm -->
+            <!-- Nút + Thêm (Có viền bo cong đẹp mắt) -->
             <Button
                 android:id="@+id/btnAdd"
-                android:layout_width="88dp"
-                android:layout_height="52dp"
+                android:layout_width="80dp"
+                android:layout_height="38dp"
+                android:background="@drawable/bg_btn_red_soft"
+                android:backgroundTint="@null"
+                android:gravity="center"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:stateListAnimator="@null"
                 android:text="+ Thêm"
+                android:textAllCaps="false"
                 android:textColor="@color/red_primary"
                 android:textSize="13sp"
                 android:textStyle="bold"
-                android:gravity="center"
-                android:padding="0dp"
-                android:minWidth="0dp"
-                android:minHeight="0dp"
-                android:background="@android:color/transparent"
-                android:backgroundTint="@null"
-                android:stateListAnimator="@null"
-                android:textAllCaps="false"/>
+                app:backgroundTint="@null" />
 
         </LinearLayout>
 

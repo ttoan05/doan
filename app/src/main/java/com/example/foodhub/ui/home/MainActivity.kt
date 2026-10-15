@@ -2,6 +2,7 @@ package com.example.foodhub.ui.home
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -26,6 +27,7 @@ import com.example.foodhub.data.CartManager
 import com.example.foodhub.data.FavoriteManager
 import com.example.foodhub.data.NotificationStore
 import com.example.foodhub.data.OrderManager
+import com.example.foodhub.data.VoucherStore
 import com.example.foodhub.data.model.AppNotification
 import com.example.foodhub.data.model.FavSort
 import com.example.foodhub.data.model.Food
@@ -39,6 +41,8 @@ import com.example.foodhub.ui.notification.SwipeToDeleteCallback
 import com.example.foodhub.ui.order.OrderAdapter
 import com.example.foodhub.ui.order.OrderDetailActivity
 import com.example.foodhub.ui.product.ProductDetailActivity
+import com.example.foodhub.ui.restaurant.RestaurantDetailActivity
+import com.example.foodhub.ui.voucher.VoucherActivity
 import com.example.foodhub.utils.FormatUtils
 import com.example.foodhub.utils.SampleData
 
@@ -81,11 +85,15 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Nạp danh sách yêu thích đã lưu (SharedPreferences)
-        FavoriteManager.init(this)
-        CartManager.ensureLoaded(this)
-        OrderManager.ensureLoaded(this)
-        NotificationStore.ensureLoaded(this)
+        // Nạp danh sách yêu thích và dữ liệu đã lưu
+        try {
+            FavoriteManager.init(this)
+            CartManager.ensureLoaded(this)
+            OrderManager.ensureLoaded(this)
+            NotificationStore.ensureLoaded(this)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
 
         setContentView(R.layout.activity_main)
 
@@ -396,38 +404,54 @@ class MainActivity : AppCompatActivity() {
         }
         contentContainer.addView(searchBar)
 
-        // Promo Banner
-        val promoBanner = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            setBackgroundResource(R.drawable.bg_promo)
-            gravity = Gravity.CENTER_VERTICAL
-            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            lp.setMargins(dp(16), 0, dp(16), dp(16))
-            layoutParams = lp
-            setPadding(dp(14), dp(12), dp(14), dp(12))
+        // Promo Banner - Chỉ hiển thị cho tài khoản chưa bấm DÙNG NGAY và chưa sử dụng FIRST30
+        if (!VoucherStore.isWelcomeBannerDismissed(this)) {
+            val promoBanner = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                setBackgroundResource(R.drawable.bg_promo)
+                gravity = Gravity.CENTER_VERTICAL
+                val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.setMargins(dp(16), 0, dp(16), dp(16))
+                layoutParams = lp
+                setPadding(dp(14), dp(12), dp(14), dp(12))
+            }
+            val promoText = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+            val promoTitle = TextView(this).apply {
+                text = "🎉 Giảm 30% cho đơn đầu tiên"
+                textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD)
+                setTextColor(getColor(R.color.red_primary))
+            }
+            val promoSub = TextView(this).apply {
+                text = "Nhập mã: FIRST30"; textSize = 12f
+                setTextColor(getColor(R.color.red_primary))
+            }
+            promoText.addView(promoTitle); promoText.addView(promoSub)
+            val promoBtn = Button(this).apply {
+                text = "DÙNG NGAY"
+                textSize = 13f
+                setTextColor(Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
+                setBackgroundResource(R.drawable.bg_btn_red)
+                setOnClickListener {
+                    VoucherStore.markWelcomeBannerDismissed(this@MainActivity)
+                    try {
+                        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Voucher Code", "FIRST30")
+                        clipboard.setPrimaryClip(clip)
+                    } catch (e: Throwable) {
+                        e.printStackTrace()
+                    }
+                    showToast("Đã nhận mã FIRST30! Mở Ví Voucher của bạn")
+                    promoBanner.visibility = View.GONE
+                    contentContainer.removeView(promoBanner)
+                    startActivity(Intent(this@MainActivity, VoucherActivity::class.java))
+                }
+            }
+            promoBanner.addView(promoText); promoBanner.addView(promoBtn)
+            contentContainer.addView(promoBanner)
         }
-        val promoText = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        val promoTitle = TextView(this).apply {
-            text = "🎉 Giảm 30% cho đơn đầu tiên"
-            textSize = 13f; setTypeface(null, android.graphics.Typeface.BOLD)
-            setTextColor(getColor(R.color.red_primary))
-        }
-        val promoSub = TextView(this).apply {
-            text = "Nhập mã: FIRST30"; textSize = 12f
-            setTextColor(getColor(R.color.red_primary))
-        }
-        promoText.addView(promoTitle); promoText.addView(promoSub)
-        val promoBtn = Button(this).apply {
-            text = "Dùng ngay"; textSize = 13f
-            setTextColor(Color.WHITE); setTypeface(null, android.graphics.Typeface.BOLD)
-            setBackgroundResource(R.drawable.bg_btn_red)
-            setOnClickListener { showToast("Mã FIRST30 đã áp dụng!") }
-        }
-        promoBanner.addView(promoText); promoBanner.addView(promoBtn)
-        contentContainer.addView(promoBanner)
 
         // Categories
         val catScroll = HorizontalScrollView(this).apply {
@@ -511,7 +535,7 @@ class MainActivity : AppCompatActivity() {
             adapter = RestaurantAdapter(
                 initialRestaurants = SampleData.RESTAURANTS,
                 onFavoriteChanged = { r, isFav, oldTime -> onRestaurantHeartChanged(r, isFav, oldTime) },
-                onViewMenu = { r -> showToast("Đang mở menu ${r.name}") }
+                onViewMenu = { r -> openRestaurantDetail(r) }
             ).also { restaurantAdapter = it; homeRestaurantAdapter = it }
             isNestedScrollingEnabled = false
             val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -711,13 +735,25 @@ class MainActivity : AppCompatActivity() {
                 homeFoodAdapter?.notifyDataSetChanged()
                 homeRestaurantAdapter?.notifyDataSetChanged()
             }
-            "likes" -> favRefresh?.invoke()
+            "likes" -> {
+                if (favRefresh != null) {
+                    favRefresh?.invoke()
+                } else {
+                    showFavoritesContent()
+                }
+            }
         }
     }
 
     private fun openFoodDetail(food: Food) {
         val intent = Intent(this, ProductDetailActivity::class.java)
         intent.putExtra(ProductDetailActivity.EXTRA_FOOD_ID, food.id)
+        startActivity(intent)
+    }
+
+    private fun openRestaurantDetail(restaurant: Restaurant) {
+        val intent = Intent(this, RestaurantDetailActivity::class.java)
+        intent.putExtra(RestaurantDetailActivity.EXTRA_RESTAURANT_ID, restaurant.id)
         startActivity(intent)
     }
 
@@ -820,7 +856,7 @@ class MainActivity : AppCompatActivity() {
         val restaurantAdapter = RestaurantAdapter(
             initialRestaurants = emptyList(),
             onFavoriteChanged = { r, isFav, oldTime -> onRestaurantHeartChanged(r, isFav, oldTime) },
-            onViewMenu = { r -> showToast("Đang mở menu ${r.name}") }
+            onViewMenu = { r -> openRestaurantDetail(r) }
         )
         rvFoods.layoutManager = GridLayoutManager(this, 2)
         rvFoods.adapter = foodAdapter

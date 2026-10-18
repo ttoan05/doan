@@ -1,26 +1,31 @@
 package com.example.foodhub.ui.product
 
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
+import android.graphics.Typeface
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodhub.R
 import com.example.foodhub.data.CartManager
+import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.FavoriteManager
 import com.example.foodhub.data.model.Food
+import com.example.foodhub.utils.FoodSizeHelper
 import com.example.foodhub.utils.FormatUtils
 import com.example.foodhub.utils.SampleData
 
 /**
- * Trang chi tiết món ăn: xem thông tin, thả tim, chọn số lượng, thêm ghi chú và thêm vào giỏ.
- * Nhận id món qua EXTRA_FOOD_ID.
+ * Trang chi tiết món ăn: xem thông tin, thả tim, chọn size, topping, số lượng, thêm ghi chú và thêm vào giỏ.
+ * Có cảnh báo khi đặt món khác quán để bảo vệ giỏ hàng.
  */
 class ProductDetailActivity : AppCompatActivity() {
 
@@ -28,9 +33,17 @@ class ProductDetailActivity : AppCompatActivity() {
         const val EXTRA_FOOD_ID = "extra_food_id"
     }
 
+    data class ToppingOption(val name: String, val price: Int)
+
     private lateinit var food: Food
     private var quantity: Int = 1
     private var isFav: Boolean = false
+
+    private var sizePriceExtra: Int = 0
+    private var selectedSizeName: String = ""
+
+    private val availableToppings = mutableListOf<ToppingOption>()
+    private val selectedToppings = mutableSetOf<ToppingOption>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,7 +52,9 @@ class ProductDetailActivity : AppCompatActivity() {
         FavoriteManager.init(this)
 
         val foodId = intent.getIntExtra(EXTRA_FOOD_ID, -1)
-        val found = SampleData.FOODS.find { it.id == foodId }
+        val found = DatabaseHelper.getInstance(this).getAllFoods().find { it.id == foodId }
+            ?: SampleData.FOODS.find { it.id == foodId }
+
         if (found == null) {
             Toast.makeText(this, "Không tìm thấy món ăn!", Toast.LENGTH_SHORT).show()
             finish()
@@ -49,10 +64,173 @@ class ProductDetailActivity : AppCompatActivity() {
         isFav = FavoriteManager.isFood(food.id)
 
         bindFood()
+        setupSizeSection()
+        setupToppingsSection()
         setupListeners()
         setupQuickNoteChips()
-        updateQuantityDisplay()
+        updateQuantityAndPriceDisplay()
         updateHeartIcon()
+    }
+
+    private fun setupSizeSection() {
+        val container = findViewById<LinearLayout>(R.id.rgSizeOptions) ?: return
+        container.removeAllViews()
+
+        val sizeOptions = FoodSizeHelper.getSizesForFood(food)
+        if (sizeOptions.isEmpty()) {
+            findViewById<View>(R.id.llSizeSection)?.visibility = View.GONE
+            selectedSizeName = ""
+            sizePriceExtra = 0
+            return
+        }
+
+        findViewById<View>(R.id.llSizeSection)?.visibility = View.VISIBLE
+
+        val radioButtons = mutableListOf<RadioButton>()
+        val dp1 = resources.displayMetrics.density.toInt()
+
+        fun selectSizeIndex(index: Int) {
+            radioButtons.forEachIndexed { i, rb ->
+                rb.isChecked = (i == index)
+            }
+            val chosen = sizeOptions[index]
+            selectedSizeName = chosen.name
+            sizePriceExtra = chosen.priceDelta
+            updateQuantityAndPriceDisplay()
+        }
+
+        sizeOptions.forEachIndexed { index, option ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    44 * dp1
+                )
+                isClickable = true
+                isFocusable = true
+            }
+
+            val rb = RadioButton(this).apply {
+                text = option.name
+                textSize = 14f
+                setTextColor(Color.parseColor("#111111"))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                isChecked = (index == 0)
+                isClickable = false
+            }
+            radioButtons.add(rb)
+
+            val tvPrice = TextView(this).apply {
+                if (option.priceDelta > 0) {
+                    text = "+${FormatUtils.money(option.priceDelta)}"
+                    setTextColor(Color.parseColor("#E63946"))
+                    setTypeface(null, Typeface.BOLD)
+                } else {
+                    text = "+0đ"
+                    setTextColor(Color.parseColor("#888888"))
+                }
+                textSize = 13f
+            }
+
+            row.setOnClickListener { selectSizeIndex(index) }
+
+            row.addView(rb)
+            row.addView(tvPrice)
+            container.addView(row)
+
+            if (index < sizeOptions.size - 1) {
+                val divider = View(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        maxOf(1, dp1 / 2)
+                    )
+                    setBackgroundColor(Color.parseColor("#EEEEEE"))
+                }
+                container.addView(divider)
+            }
+        }
+
+        selectSizeIndex(0)
+    }
+
+    private fun setupToppingsSection() {
+        val container = findViewById<LinearLayout>(R.id.llToppingsContainer) ?: return
+        container.removeAllViews()
+        availableToppings.clear()
+        selectedToppings.clear()
+
+        val list = FoodSizeHelper.getToppingsForFood(food).map {
+            ToppingOption(it.name, it.price)
+        }
+
+        if (list.isEmpty()) {
+            findViewById<View>(R.id.llToppingsSection)?.visibility = View.GONE
+            return
+        }
+        findViewById<View>(R.id.llToppingsSection)?.visibility = View.VISIBLE
+
+        availableToppings.addAll(list)
+
+        val dp1 = (resources.displayMetrics.density).toInt()
+        val dp8 = 8 * dp1
+
+        list.forEachIndexed { index, option ->
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                setPadding(0, dp8, 0, dp8)
+                isClickable = true
+                isFocusable = true
+            }
+
+            val cb = CheckBox(this).apply {
+                text = option.name
+                textSize = 14f
+                setTextColor(Color.parseColor("#111111"))
+                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+            }
+
+            val tvPrice = TextView(this).apply {
+                text = "+${FormatUtils.money(option.price)}"
+                textSize = 13f
+                setTextColor(Color.parseColor("#E63946"))
+                setTypeface(null, Typeface.BOLD)
+                setPadding(dp8, 0, 0, 0)
+            }
+
+            cb.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    selectedToppings.add(option)
+                } else {
+                    selectedToppings.remove(option)
+                }
+                updateQuantityAndPriceDisplay()
+            }
+
+            row.setOnClickListener {
+                cb.isChecked = !cb.isChecked
+            }
+
+            row.addView(cb)
+            row.addView(tvPrice)
+            container.addView(row)
+
+            if (index < list.size - 1) {
+                val divider = View(this).apply {
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        maxOf(1, dp1 / 2)
+                    )
+                    setBackgroundColor(Color.parseColor("#EEEEEE"))
+                }
+                container.addView(divider)
+            }
+        }
     }
 
     private fun setupListeners() {
@@ -71,27 +249,43 @@ class ProductDetailActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.btnProdMinus).setOnClickListener {
             if (quantity > 1) {
                 quantity--
-                updateQuantityDisplay()
+                updateQuantityAndPriceDisplay()
             }
         }
 
         findViewById<TextView>(R.id.btnProdPlus).setOnClickListener {
             if (quantity < 99) {
                 quantity++
-                updateQuantityDisplay()
+                updateQuantityAndPriceDisplay()
             }
         }
 
         findViewById<Button>(R.id.btnProdAddToCart).setOnClickListener {
             val etNote = findViewById<EditText>(R.id.etProdNote)
-            val note = etNote.text.toString().trim()
+            val userNote = etNote.text.toString().trim()
 
-            CartManager.addFood(food, quantity = quantity, note = note)
+            val basePrice = FormatUtils.parsePrice(food.price)
+            val currentUnitPrice = basePrice + sizePriceExtra + selectedToppings.sumOf { it.price }
 
-            val noteMsg = if (note.isNotBlank()) " (Ghi chú: $note)" else ""
+            val noteParts = mutableListOf<String>()
+            val cleanSize = selectedSizeName.replace(Regex("\\(.*\\)"), "").trim()
+            if (cleanSize.isNotEmpty()) {
+                noteParts.add(cleanSize)
+            }
+            if (selectedToppings.isNotEmpty()) {
+                val toppingStr = selectedToppings.joinToString(", ") { "+${it.name}" }
+                noteParts.add(toppingStr)
+            }
+            if (userNote.isNotEmpty()) {
+                noteParts.add(userNote)
+            }
+            val finalNote = noteParts.joinToString(" • ")
+
+            CartManager.addFood(food, quantity = quantity, note = finalNote, customUnitPrice = currentUnitPrice)
+            val noteMsg = if (finalNote.isNotBlank()) " ($finalNote)" else ""
             Toast.makeText(
                 this,
-                "Đã thêm $quantity x ${food.name} vào giỏ hàng$noteMsg!",
+                "Đã thêm $quantity x ${food.name} vào giỏ hàng$noteMsg! 🛒",
                 Toast.LENGTH_SHORT
             ).show()
             finish()
@@ -102,7 +296,7 @@ class ProductDetailActivity : AppCompatActivity() {
         val container = findViewById<LinearLayout>(R.id.llQuickNotes) ?: return
         val etNote = findViewById<EditText>(R.id.etProdNote)
 
-        val chips = listOf("Ít ngọt / Ít đường", "Không cay", "Cay nhiều", "Thêm ớt", "Nhiều đá", "Không đá", "Để nước riêng")
+        val chips = listOf("Ít ngọt / Ít đường", "Không cay", "Cay nhiều", "Thêm ớt", "Nhiều đá", "Không đá", "Để nước riêng", "Không hành lá")
         chips.forEach { chipText ->
             val tvChip = TextView(this).apply {
                 text = chipText
@@ -134,20 +328,7 @@ class ProductDetailActivity : AppCompatActivity() {
         val ivImage = findViewById<ImageView>(R.id.ivProdImage)
         val tvEmoji = findViewById<TextView>(R.id.tvProdEmoji)
 
-        val actualImgRes = SampleData.resolveFoodImage(food.id, food.name, food.imageRes)
-        if (actualImgRes != 0) {
-            ivImage.setImageResource(actualImgRes)
-            ivImage.visibility = View.VISIBLE
-            tvEmoji.visibility = View.GONE
-        } else {
-            ivImage.visibility = View.GONE
-            tvEmoji.visibility = View.VISIBLE
-            tvEmoji.text = food.emoji
-            tvEmoji.background = GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(food.bgColorStart, food.bgColorEnd)
-            )
-        }
+        SampleData.loadFoodImage(ivImage, tvEmoji, food)
 
         findViewById<TextView>(R.id.tvProdName).text = food.name
         findViewById<TextView>(R.id.tvProdRestaurant).text = food.restaurant
@@ -158,10 +339,11 @@ class ProductDetailActivity : AppCompatActivity() {
             "🕒 Giao trong 20-30 phút   •   🚚 Freeship đơn từ 50.000đ"
     }
 
-    private fun updateQuantityDisplay() {
+    private fun updateQuantityAndPriceDisplay() {
         findViewById<TextView>(R.id.tvProdQty).text = quantity.toString()
 
-        val unitPrice = FormatUtils.parsePrice(food.price)
+        val basePrice = FormatUtils.parsePrice(food.price)
+        val unitPrice = basePrice + sizePriceExtra + selectedToppings.sumOf { it.price }
         val total = unitPrice * quantity
         findViewById<Button>(R.id.btnProdAddToCart).text =
             "Thêm vào giỏ • ${FormatUtils.money(total)}"

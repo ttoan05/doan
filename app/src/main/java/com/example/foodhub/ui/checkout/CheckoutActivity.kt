@@ -50,6 +50,7 @@ class CheckoutActivity : AppCompatActivity() {
 
     private var appliedVoucher: Voucher? = null
     private var appliedDiscount: Int = 0
+    private var isWarningDismissed: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,6 +106,11 @@ class CheckoutActivity : AppCompatActivity() {
 
         btnRemoveVoucher.setOnClickListener {
             removeVoucher()
+        }
+
+        findViewById<View>(R.id.btnCloseWarning)?.setOnClickListener {
+            isWarningDismissed = true
+            llMultiRestaurantWarning.visibility = View.GONE
         }
 
         bindSummary()
@@ -181,7 +187,8 @@ class CheckoutActivity : AppCompatActivity() {
         val result = VoucherStore.validate(
             rawCode = code,
             subtotal = subtotal,
-            shippingForFreeship = shipping
+            shippingForFreeship = shipping,
+            context = this
         )
 
         if (result.success && result.voucher != null) {
@@ -224,7 +231,7 @@ class CheckoutActivity : AppCompatActivity() {
 
         // Cảnh báo phí ship khi có nhiều nhà hàng
         val restaurants = items.map { it.restaurant }.distinct()
-        if (restaurants.size > 1) {
+        if (restaurants.size > 1 && !isWarningDismissed) {
             llMultiRestaurantWarning.visibility = View.VISIBLE
             tvMultiRestaurantWarningText.text =
                 "Giỏ hàng của bạn gồm món từ ${restaurants.size} quán khác nhau (${restaurants.joinToString(", ")}). Vì mỗi quán là 1 đơn riêng do tài xế lấy món độc lập, phí giao hàng sẽ được tính riêng cho từng quán."
@@ -240,7 +247,8 @@ class CheckoutActivity : AppCompatActivity() {
             val recheck = VoucherStore.validate(
                 appliedVoucher!!.code,
                 subtotal,
-                shipping
+                shipping,
+                this
             )
             if (recheck.success) {
                 appliedDiscount = recheck.discount

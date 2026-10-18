@@ -92,11 +92,7 @@ class NotificationAdapter(
     private fun bindItem(holder: ItemHolder, n: AppNotification) {
         val ctx = holder.itemView.context
 
-        holder.tvIcon.text = n.emoji
-        holder.tvIcon.background = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(Color.parseColor(n.type.iconBg))
-        }
+        holder.tvIcon.visibility = View.GONE
 
         holder.tvTitle.text = n.title
         holder.tvMessage.text = n.message

@@ -55,13 +55,33 @@
                 android:layout_marginBottom="10dp"
                 android:visibility="gone">
 
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="⚠️ Lưu ý về phí giao hàng"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:textColor="#B45309"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="⚠️ Lưu ý về phí giao hàng"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="#B45309"/>
+
+                    <TextView
+                        android:id="@+id/btnCloseWarning"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:gravity="center"
+                        android:text="✕"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#B45309"
+                        android:clickable="true"
+                        android:focusable="true"/>
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/tvMultiRestaurantWarningText"

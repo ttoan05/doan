@@ -9,11 +9,12 @@ data class CartItem(
     val name: String,
     val restaurant: String,
     val emoji: String,
-    val price: Int,
+    var price: Int,
     var quantity: Int,
     val imageRes: Int = 0,
-    /** Ghi chú / tùy chọn của riêng dòng món này (vd: "ít đường, thêm topping"). */
-    val note: String = ""
+    /** Ghi chú / tùy chọn của riêng dòng món này (vd: "Size L, ít đường, thêm topping"). */
+    var note: String = "",
+    val imageUri: String? = null
 ) {
     val total: Int
         get() = price * quantity

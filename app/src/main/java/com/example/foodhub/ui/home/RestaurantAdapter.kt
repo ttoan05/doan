@@ -1,6 +1,5 @@
 package com.example.foodhub.ui.home
 
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.foodhub.R
 import com.example.foodhub.data.FavoriteManager
 import com.example.foodhub.data.model.Restaurant
+import com.example.foodhub.utils.SampleData
 
 class RestaurantAdapter(
     initialRestaurants: List<Restaurant>,
@@ -29,7 +29,7 @@ class RestaurantAdapter(
         notifyDataSetChanged()
     }
 
-    /** Số nhà hàng đang hiển thị sau khi lọc — dùng để hiện thông báo "Không tìm thấy...". */
+    /** Số nhà hàng đang hiển thị sau khi lọc — dùng để hiển thị thông báo "Không tìm thấy...". */
     fun currentCount(): Int = restaurants.size
 
     inner class RestaurantViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -59,17 +59,7 @@ class RestaurantAdapter(
         holder.tvTime.text    = "🕒 ${r.time}"
         holder.tvDist.text    = "📍 ${r.dist}"
 
-        if (r.imageRes != 0) {
-            holder.ivBanner.setImageResource(r.imageRes)
-            holder.ivBanner.visibility = View.VISIBLE
-        } else {
-            holder.ivBanner.visibility = View.GONE
-            val gradient = GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(r.bgColorStart, r.bgColorEnd)
-            )
-            holder.flBanner.background = gradient
-        }
+        SampleData.loadRestaurantImage(holder.ivBanner, holder.flBanner, r)
 
         holder.btnMenu.setOnClickListener { onViewMenu(r) }
         holder.itemView.setOnClickListener { onViewMenu(r) }

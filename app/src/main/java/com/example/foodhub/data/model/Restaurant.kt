@@ -10,5 +10,6 @@ data class Restaurant(
     val badge: String,
     val bgColorStart: Int,
     val bgColorEnd: Int,
-    val imageRes: Int = 0
+    val imageRes: Int = 0,
+    val imageUri: String? = null
 )

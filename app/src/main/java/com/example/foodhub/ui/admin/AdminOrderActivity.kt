@@ -45,7 +45,7 @@ class AdminOrderActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
         findViewById<View>(R.id.btnRefreshOrders).setOnClickListener {
-            Toast.makeText(this, "Đang làm mới danh sách đơn...", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Đã làm mới danh sách đơn hàng", Toast.LENGTH_SHORT).show()
             loadOrders()
         }
 
@@ -61,6 +61,9 @@ class AdminOrderActivity : AppCompatActivity() {
         super.onResume()
         loadOrders()
     }
+
+    private fun dpToPx(dp: Int): Int =
+        (dp * resources.displayMetrics.density).toInt()
 
     private fun loadOrders() {
         allOrders = dbHelper.getAllOrders()
@@ -81,25 +84,27 @@ class AdminOrderActivity : AppCompatActivity() {
                 else -> 0
             }
 
-            val btn = Button(this).apply {
+            val tvTab = TextView(this).apply {
                 text = "$tabTitle ($count)"
-                textSize = 12f
+                textSize = 12.5f
+                gravity = Gravity.CENTER
                 setTypeface(null, if (isSelected) Typeface.BOLD else Typeface.NORMAL)
-                setBackgroundResource(if (isSelected) R.drawable.bg_cat_active else R.drawable.bg_cat_normal)
-                setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#4B5563"))
+                setBackgroundResource(if (isSelected) R.drawable.bg_cat_active else R.drawable.bg_tab_chip_normal)
+                setTextColor(if (isSelected) Color.WHITE else Color.parseColor("#475569"))
                 val lp = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
+                    dpToPx(36)
                 )
-                lp.setMargins(0, 0, 12, 0)
+                lp.setMargins(0, 0, dpToPx(8), 0)
                 layoutParams = lp
+                setPadding(dpToPx(14), 0, dpToPx(14), 0)
                 setOnClickListener {
                     selectedTab = tabTitle
                     renderTabs()
                     renderOrderList()
                 }
             }
-            llOrderTabs.addView(btn)
+            llOrderTabs.addView(tvTab)
         }
     }
 
@@ -127,203 +132,154 @@ class AdminOrderActivity : AppCompatActivity() {
         tvOrderSummary.text = "Hiển thị ${filtered.size} / ${allOrders.size} đơn hàng hệ thống"
 
         if (filtered.isEmpty()) {
-            val tvEmpty = TextView(this).apply {
-                text = "Không có đơn hàng nào trong mục này."
-                textSize = 14f
-                gravity = Gravity.CENTER
-                setTextColor(Color.parseColor("#6B7280"))
-                setPadding(0, 60, 0, 60)
-            }
-            llOrderContainer.addView(tvEmpty)
-            return
-        }
-
-        filtered.forEach { order ->
-            val card = LinearLayout(this).apply {
+            val emptyCard = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
-                setBackgroundResource(R.drawable.bg_card)
-                setPadding(20, 18, 20, 18)
-                val params = LinearLayout.LayoutParams(
+                gravity = Gravity.CENTER
+                setPadding(dpToPx(24), dpToPx(60), dpToPx(24), dpToPx(40))
+                layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
                 )
-                params.setMargins(0, 0, 0, 16)
-                layoutParams = params
             }
-
-            // Header row: Mã đơn + Badge trạng thái
-            val rowHeader = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
+            val tvIcon = TextView(this).apply {
+                text = "📦"
+                textSize = 44f
+                gravity = Gravity.CENTER
             }
-
-            val tvId = TextView(this).apply {
-                text = "Mã đơn: ${order.code}"
-                textSize = 15f
+            val tvEmpty = TextView(this).apply {
+                text = "Không tìm thấy đơn hàng nào phù hợp"
+                textSize = 14f
                 setTypeface(null, Typeface.BOLD)
-                setTextColor(Color.parseColor("#1F2937"))
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                gravity = Gravity.CENTER
+                setTextColor(Color.parseColor("#64748B"))
+                setPadding(0, dpToPx(10), 0, 0)
             }
+            emptyCard.addView(tvIcon)
+            emptyCard.addView(tvEmpty)
+            llOrderContainer.addView(emptyCard)
+            return
+        }
 
-            val tvStatusBadge = TextView(this).apply {
-                OrderUi.styleStatus(this, order.status)
-                setPadding(14, 6, 14, 6)
-            }
+        val inflater = layoutInflater
+        filtered.forEach { order ->
+            val itemView = inflater.inflate(R.layout.item_admin_order, llOrderContainer, false)
 
-            rowHeader.addView(tvId)
-            rowHeader.addView(tvStatusBadge)
-            card.addView(rowHeader)
+            val tvCode = itemView.findViewById<TextView>(R.id.tvOrderCode)
+            val tvStatus = itemView.findViewById<TextView>(R.id.tvOrderStatus)
+            val tvMeta = itemView.findViewById<TextView>(R.id.tvOrderMeta)
+            val tvCustomer = itemView.findViewById<TextView>(R.id.tvCustomerName)
+            val tvAddress = itemView.findViewById<TextView>(R.id.tvCustomerAddress)
+            val tvItems = itemView.findViewById<TextView>(R.id.tvOrderItems)
+            val llNote = itemView.findViewById<View>(R.id.llOrderNote)
+            val tvNote = itemView.findViewById<TextView>(R.id.tvOrderNote)
+            val tvPayment = itemView.findViewById<TextView>(R.id.tvPaymentMethod)
+            val tvTotal = itemView.findViewById<TextView>(R.id.tvOrderTotal)
+            val btnDetail = itemView.findViewById<View>(R.id.btnOrderDetail)
+            val btnUpdate = itemView.findViewById<View>(R.id.btnUpdateStatus)
 
-            // Info rows
-            val tvDateAndShop = TextView(this).apply {
-                text = "🕒 ${FormatUtils.dateTime(order.createdAt)}  •  🏠 ${order.restaurant}"
-                textSize = 12f
-                setTextColor(Color.parseColor("#6B7280"))
-                setPadding(0, 4, 0, 6)
-            }
-            card.addView(tvDateAndShop)
+            // Header info
+            tvCode.text = "Mã đơn: #${order.code}"
+            OrderUi.styleStatus(tvStatus, order.status)
+            tvMeta.text = "${FormatUtils.dateTime(order.createdAt)}  •  ${order.restaurant}"
 
-            val tvCustomer = TextView(this).apply {
-                text = "👤 Khách: ${order.receiverName} (${order.phone})\n📍 Đ/c: ${order.address}"
-                textSize = 13f
-                setTextColor(Color.parseColor("#374151"))
-                setLineSpacing(3f, 1f)
-                setPadding(0, 0, 0, 6)
-            }
-            card.addView(tvCustomer)
+            // Customer
+            tvCustomer.text = "Khách hàng: ${order.receiverName} • ${order.phone}"
+            tvAddress.text = "Địa chỉ: ${order.address}"
 
-            // Items summary
+            // Items
             val itemsSummary = order.items.joinToString(", ") { "${it.name} (x${it.quantity})" }
-            val tvItems = TextView(this).apply {
-                text = "🍲 Món (${order.totalQuantity}): $itemsSummary"
-                textSize = 12f
-                setTextColor(Color.parseColor("#4B5563"))
-                setPadding(0, 0, 0, 6)
-            }
-            card.addView(tvItems)
+            tvItems.text = "Món (${order.totalQuantity}): $itemsSummary"
 
-            // Order note (if any)
+            // Note
             if (order.orderNote.isNotBlank()) {
-                val tvNote = TextView(this).apply {
-                    text = "📝 Ghi chú: ${order.orderNote}"
-                    textSize = 12f
-                    setTypeface(null, Typeface.ITALIC)
-                    setTextColor(Color.parseColor("#B45309"))
-                    setBackgroundColor(Color.parseColor("#FEF3C7"))
-                    setPadding(12, 6, 12, 6)
-                }
-                card.addView(tvNote)
+                llNote.visibility = View.VISIBLE
+                tvNote.text = "Ghi chú: ${order.orderNote}"
+            } else {
+                llNote.visibility = View.GONE
             }
 
             // Payment & Total
-            val rowPayment = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(0, 8, 0, 8)
-            }
-            val tvPayMethod = TextView(this).apply {
-                text = "💳 ${order.paymentMethod}"
-                textSize = 12f
-                setTextColor(Color.parseColor("#6B7280"))
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            }
-            val tvTotal = TextView(this).apply {
-                text = "Tổng: ${FormatUtils.money(order.total)}"
-                textSize = 16f
-                setTypeface(null, Typeface.BOLD)
-                setTextColor(Color.parseColor("#E63946"))
-            }
-            rowPayment.addView(tvPayMethod)
-            rowPayment.addView(tvTotal)
-            card.addView(rowPayment)
+            tvPayment.text = order.paymentMethod
+            tvTotal.text = FormatUtils.money(order.total)
 
-            // Divider
-            val div = View(this).apply {
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, 1
-                ).apply { setMargins(0, 4, 0, 10) }
-                setBackgroundColor(Color.parseColor("#F3F4F6"))
-            }
-            card.addView(div)
-
-            // Action buttons row
-            val rowActions = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.END
-            }
-
-            val btnDetail = Button(this).apply {
-                text = "🔍 Xem chi tiết"
-                textSize = 12f
-                setBackgroundResource(R.drawable.bg_btn_blue)
-                setTextColor(Color.WHITE)
-                val lp = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                lp.setMargins(0, 0, 12, 0)
-                layoutParams = lp
-                setOnClickListener {
-                    val intent = Intent(this@AdminOrderActivity, OrderDetailActivity::class.java).apply {
-                        putExtra(OrderDetailActivity.EXTRA_ORDER_ID, order.id)
-                    }
-                    startActivity(intent)
+            // Actions
+            btnDetail.setOnClickListener {
+                val intent = Intent(this@AdminOrderActivity, OrderDetailActivity::class.java).apply {
+                    putExtra(OrderDetailActivity.EXTRA_ORDER_ID, order.id)
                 }
+                startActivity(intent)
             }
 
-            val btnUpdate = Button(this).apply {
-                text = "⚡ Cập nhật trạng thái"
-                textSize = 12f
-                setBackgroundResource(R.drawable.bg_btn_red)
-                setTextColor(Color.WHITE)
-                setOnClickListener { showUpdateStatusDialog(order) }
+            btnUpdate.setOnClickListener {
+                showUpdateStatusDialog(order)
             }
 
-            rowActions.addView(btnDetail)
-            rowActions.addView(btnUpdate)
-            card.addView(rowActions)
-
-            llOrderContainer.addView(card)
+            llOrderContainer.addView(itemView)
         }
     }
 
     private fun showUpdateStatusDialog(order: Order) {
-        val options = arrayOf(
-            "1. Xác nhận đơn (Nhà hàng đã xác nhận)",
-            "2. Đang chuẩn bị món ăn (Bếp đang làm)",
-            "3. Bàn giao shipper (Đang giao hàng)",
-            "4. Hoàn tất đơn hàng (Đã giao thành công)",
-            "5. Hủy đơn hàng (Khách hủy / hết món)"
-        )
+        val dialogView = layoutInflater.inflate(R.layout.dialog_admin_order_status, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
 
-        AlertDialog.Builder(this)
-            .setTitle("Cập nhật đơn #${order.id}")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
-                        dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 1)
-                        Toast.makeText(this, "Đã xác nhận đơn hàng #${order.id}", Toast.LENGTH_SHORT).show()
-                    }
-                    1 -> {
-                        dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 2)
-                        Toast.makeText(this, "Đã chuyển sang: Đang chuẩn bị món", Toast.LENGTH_SHORT).show()
-                    }
-                    2 -> {
-                        dbHelper.updateOrderStatus(order.id, OrderStatus.SHIPPING, 3)
-                        Toast.makeText(this, "Đã chuyển sang: Đang giao hàng", Toast.LENGTH_SHORT).show()
-                    }
-                    3 -> {
-                        dbHelper.updateOrderStatus(order.id, OrderStatus.DELIVERED, 4)
-                        Toast.makeText(this, "Đã hoàn tất đơn hàng #${order.id}!", Toast.LENGTH_SHORT).show()
-                    }
-                    4 -> {
-                        dbHelper.updateOrderStatus(order.id, OrderStatus.CANCELLED, -1)
-                        Toast.makeText(this, "Đã hủy đơn hàng #${order.id}", Toast.LENGTH_SHORT).show()
-                    }
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
+        dialogView.findViewById<TextView>(R.id.tvDialogOrderInfo).text =
+            "Đơn #${order.code} • Khách: ${order.receiverName}"
+
+        dialogView.findViewById<View>(R.id.btnDialogClose).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        // 1. Xác nhận đơn
+        dialogView.findViewById<View>(R.id.btnStatusConfirm).setOnClickListener {
+            dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 1)
+            Toast.makeText(this, "Đã xác nhận đơn hàng #${order.code}", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+            loadOrders()
+        }
+
+        // 2. Đang chuẩn bị món
+        dialogView.findViewById<View>(R.id.btnStatusPreparing).setOnClickListener {
+            dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 2)
+            Toast.makeText(this, "Đã chuyển sang: Đang chuẩn bị món", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+            loadOrders()
+        }
+
+        // 3. Đang giao hàng
+        dialogView.findViewById<View>(R.id.btnStatusShipping).setOnClickListener {
+            dbHelper.updateOrderStatus(order.id, OrderStatus.SHIPPING, 3)
+            Toast.makeText(this, "Đã chuyển sang: Đang giao hàng", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+            loadOrders()
+        }
+
+        // 4. Hoàn tất đơn hàng
+        dialogView.findViewById<View>(R.id.btnStatusDelivered).setOnClickListener {
+            dbHelper.updateOrderStatus(order.id, OrderStatus.DELIVERED, 4)
+            Toast.makeText(this, "Đã hoàn tất đơn hàng #${order.code}!", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+            loadOrders()
+        }
+
+        // 5. Hủy đơn
+        dialogView.findViewById<View>(R.id.btnStatusCancel).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("Xác nhận hủy đơn hàng")
+                .setMessage("Bạn có chắc chắn muốn hủy đơn hàng #${order.code}?")
+                .setPositiveButton("Hủy đơn") { _, _ ->
+                    dbHelper.updateOrderStatus(order.id, OrderStatus.CANCELLED, -1)
+                    Toast.makeText(this, "Đã hủy đơn hàng #${order.code}", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss()
+                    loadOrders()
                 }
-                loadOrders()
-            }
-            .setNegativeButton("Đóng", null)
-            .show()
+                .setNegativeButton("Không", null)
+                .show()
+        }
+
+        dialog.show()
     }
 }

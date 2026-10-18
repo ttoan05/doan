@@ -1,11 +1,19 @@
 package com.example.foodhub.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
 import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
+import com.example.foodhub.data.model.CartItem
 import com.example.foodhub.data.model.Food
 import com.example.foodhub.data.model.Restaurant
+import java.io.File
 
 object SampleData {
 
@@ -14,7 +22,7 @@ object SampleData {
         get() = _categories
 
     val DEFAULT_FOODS = listOf(
-        Food(1, "Phở bò đặc biệt",   "Quán Phở Tuyệt",   4.8, 156, "45.000đ", "Phở",      "🍜", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_pho_bo),
+        Food(1, "Phở bò đặc biệt",   "Quán Phở Tuyệt",   4.8, 156, "45.000đ", "Phở",      "🍲", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_pho_bo),
         Food(2, "Gà rán giòn cay",   "KFC Việt Nam",      4.9, 234, "55.000đ", "Gà rán",   "🍗", Color.parseColor("#E76F51"), Color.parseColor("#C1440E"), R.drawable.img_ga_ran),
         Food(3, "Bánh mì thập cẩm",  "Bánh mì Sài Gòn",  4.7, 189, "25.000đ", "Bánh mì",  "🥖", Color.parseColor("#F4A261"), Color.parseColor("#F9C74F"), R.drawable.img_banh_mi),
         Food(4, "Cơm tấm sườn nướng","Cơm tấm Quỳnh",    4.6, 112, "35.000đ", "Cơm",      "🍛", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_com_tam),
@@ -26,15 +34,18 @@ object SampleData {
     val FOODS: List<Food>
         get() = _foods
 
-    val RESTAURANTS = listOf(
+    val DEFAULT_RESTAURANTS = listOf(
         Restaurant(1, "Quán Phở Tuyệt",  "Phở, Cơm, Mì • Quận 1",             4.8, "30-45 phút", "1.2 km", "Freeship đơn từ 50k", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_res_pho),
         Restaurant(2, "KFC Việt Nam",    "Gà rán, Thức ăn nhanh • Quận 3",     4.9, "20-30 phút", "2.5 km", "Ưu đãi 20% combo",    Color.parseColor("#E76F51"), Color.parseColor("#C1440E"), R.drawable.img_res_kfc),
         Restaurant(3, "Bánh mì Sài Gòn","Bánh mì, Nước giải khát • Quận 10",  4.7, "15-25 phút", "0.8 km", "Bán chạy nhất",       Color.parseColor("#F9C74F"), Color.parseColor("#F4A261"), R.drawable.img_res_banh_mi)
     )
 
+    private val _restaurants = mutableListOf<Restaurant>().apply { addAll(DEFAULT_RESTAURANTS) }
+    val RESTAURANTS: List<Restaurant>
+        get() = _restaurants
+
     /**
      * Tự động ánh xạ ảnh drawable chuẩn cho món ăn theo ID hoặc tên món.
-     * Giải quyết triệt để vấn đề ID tài nguyên Android (R.drawable.*) bị thay đổi sau mỗi lần build/compile.
      */
     fun resolveFoodImage(id: Int, name: String, storedRes: Int = 0): Int {
         val def = DEFAULT_FOODS.find { it.id == id || it.name.trim().equals(name.trim(), ignoreCase = true) }
@@ -48,6 +59,153 @@ object SampleData {
             lower.contains("mì quảng") || (lower.contains("mì") && !lower.contains("bánh")) -> R.drawable.img_mi_quang
             lower.contains("chanh") || lower.contains("nước") -> R.drawable.img_nuoc_chanh
             else -> storedRes
+        }
+    }
+
+    /**
+     * Tra cứu đường dẫn ảnh do admin upload theo foodId.
+     */
+    fun resolveFoodImageUri(foodId: Int, context: Context? = null): String? {
+        val cached = _foods.find { it.id == foodId }?.imageUri
+        if (!cached.isNullOrEmpty()) return cached
+        if (context != null) {
+            try {
+                val db = DatabaseHelper.getInstance(context)
+                val fromDb = db.getAllFoods().find { it.id == foodId }?.imageUri
+                if (!fromDb.isNullOrEmpty()) return fromDb
+            } catch (_: Throwable) {}
+        }
+        return null
+    }
+
+    /**
+     * Giải mã ảnh an toàn chống OutOfMemoryError
+     */
+    fun decodeSampledBitmap(path: String, reqWidth: Int, reqHeight: Int): Bitmap? {
+        return try {
+            val options = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(path, options)
+            var inSampleSize = 1
+            if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
+                val halfHeight = options.outHeight / 2
+                val halfWidth = options.outWidth / 2
+                while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                    inSampleSize *= 2
+                }
+            }
+            options.inSampleSize = inSampleSize
+            options.inJustDecodeBounds = false
+            BitmapFactory.decodeFile(path, options)
+        } catch (_: Throwable) {
+            null
+        }
+    }
+
+    /**
+     * Hiển thị ảnh món ăn ưu tiên ảnh người dùng upload từ máy (imageUri), sau đó đến drawable tài nguyên, cuối cùng là emoji.
+     */
+    fun loadFoodImage(imageView: ImageView, emojiView: TextView?, food: Food) {
+        val uri = if (!food.imageUri.isNullOrEmpty()) food.imageUri else resolveFoodImageUri(food.id, imageView.context)
+        if (!uri.isNullOrEmpty()) {
+            val file = File(uri)
+            if (file.exists()) {
+                try {
+                    val bitmap = decodeSampledBitmap(file.absolutePath, 350, 350)
+                    if (bitmap != null) {
+                        imageView.setImageBitmap(bitmap)
+                        imageView.visibility = View.VISIBLE
+                        emojiView?.visibility = View.GONE
+                        return
+                    }
+                } catch (_: Throwable) {}
+            }
+        }
+
+        val res = resolveFoodImage(food.id, food.name, food.imageRes)
+        if (res != 0) {
+            imageView.setImageResource(res)
+            imageView.visibility = View.VISIBLE
+            emojiView?.visibility = View.GONE
+        } else {
+            imageView.visibility = View.GONE
+            emojiView?.visibility = View.VISIBLE
+            emojiView?.text = food.emoji.ifEmpty { "🍲" }
+        }
+    }
+
+    /**
+     * Hiển thị ảnh cho CartItem trong Giỏ hàng và Đơn hàng.
+     */
+    fun loadCartItemImage(imageView: ImageView, emojiView: TextView?, item: CartItem) {
+        val uri = if (!item.imageUri.isNullOrEmpty()) item.imageUri else resolveFoodImageUri(item.foodId, imageView.context)
+        if (!uri.isNullOrEmpty()) {
+            val file = File(uri)
+            if (file.exists()) {
+                try {
+                    val bitmap = decodeSampledBitmap(file.absolutePath, 200, 200)
+                    if (bitmap != null) {
+                        imageView.setImageBitmap(bitmap)
+                        imageView.visibility = View.VISIBLE
+                        emojiView?.visibility = View.GONE
+                        return
+                    }
+                } catch (_: Throwable) {}
+            }
+        }
+
+        val res = resolveFoodImage(item.foodId, item.name, item.imageRes)
+        if (res != 0) {
+            imageView.setImageResource(res)
+            imageView.visibility = View.VISIBLE
+            emojiView?.visibility = View.GONE
+        } else {
+            imageView.visibility = View.GONE
+            emojiView?.visibility = View.VISIBLE
+            emojiView?.text = item.emoji.ifEmpty { "🍲" }
+        }
+    }
+
+    /**
+     * Hiển thị ảnh cho Nhà hàng: Ưu tiên ảnh admin upload từ máy (imageUri), tiếp theo là imageRes, cuối cùng là màu gradient fallback.
+     */
+    fun loadRestaurantImage(imageView: ImageView, bannerContainer: View?, restaurant: Restaurant) {
+        val uri = restaurant.imageUri
+        if (!uri.isNullOrEmpty()) {
+            val file = File(uri)
+            if (file.exists()) {
+                try {
+                    val bitmap = decodeSampledBitmap(file.absolutePath, 500, 300)
+                    if (bitmap != null) {
+                        imageView.setImageBitmap(bitmap)
+                        imageView.visibility = View.VISIBLE
+                        return
+                    }
+                } catch (_: Throwable) {}
+            }
+        }
+
+        if (restaurant.imageRes != 0) {
+            imageView.setImageResource(restaurant.imageRes)
+            imageView.visibility = View.VISIBLE
+        } else {
+            val bgStart = if (restaurant.bgColorStart != 0) restaurant.bgColorStart else Color.parseColor("#E63946")
+            val bgEnd = if (restaurant.bgColorEnd != 0) restaurant.bgColorEnd else Color.parseColor("#C1121F")
+            if (bannerContainer != null) {
+                imageView.visibility = View.GONE
+                val gradient = GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    intArrayOf(bgStart, bgEnd)
+                )
+                bannerContainer.background = gradient
+            } else {
+                imageView.setImageDrawable(
+                    GradientDrawable(
+                        GradientDrawable.Orientation.TL_BR,
+                        intArrayOf(bgStart, bgEnd)
+                    )
+                )
+                imageView.visibility = View.VISIBLE
+            }
         }
     }
 
@@ -65,6 +223,11 @@ object SampleData {
                 _foods.addAll(foods.map { f ->
                     f.copy(imageRes = resolveFoodImage(f.id, f.name, f.imageRes))
                 })
+            }
+            val rests = db.getAllRestaurants()
+            if (rests.isNotEmpty()) {
+                _restaurants.clear()
+                _restaurants.addAll(rests)
             }
         } catch (e: Throwable) {
             e.printStackTrace()

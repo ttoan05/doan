@@ -88,22 +88,14 @@
                 android:background="@drawable/bg_address_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="🔔"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -143,22 +135,14 @@
                 android:background="@drawable/bg_address_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="📢"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -198,22 +182,14 @@
                 android:background="@drawable/bg_address_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="💬"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -266,22 +242,14 @@
                 android:background="@drawable/bg_address_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="🌙"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -321,22 +289,14 @@
                 android:background="@drawable/bg_address_card"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="📍"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -391,22 +351,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="🔒"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -450,22 +402,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="🛡️"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -509,22 +453,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="🌐"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -582,22 +518,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="⭐"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -641,22 +569,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="📋"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
@@ -700,22 +620,14 @@
                 android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
-                android:paddingStart="16dp"
+                android:paddingStart="18dp"
                 android:paddingTop="14dp"
                 android:paddingEnd="16dp"
                 android:paddingBottom="14dp">
 
-                <TextView
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="📱"
-                    android:textSize="22sp" />
-
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
                     android:layout_marginEnd="8dp"
                     android:layout_weight="1"
                     android:orientation="vertical">

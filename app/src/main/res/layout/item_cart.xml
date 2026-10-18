@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -8,18 +10,30 @@
     android:padding="12dp"
     android:layout_marginBottom="10dp">
 
-    <ImageView
-        android:id="@+id/ivCartImage"
+    <!-- Food Image Container (Always 64dp x 64dp with rounded corners) -->
+    <androidx.cardview.widget.CardView
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:scaleType="centerCrop"
-        android:contentDescription="Hình món ăn"/>
+        app:cardCornerRadius="10dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="#F8FAFC">
 
-    <TextView
-        android:id="@+id/tvCartEmoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"/>
+        <ImageView
+            android:id="@+id/ivCartImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="Hình món ăn"/>
+
+        <TextView
+            android:id="@+id/tvCartEmoji"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textSize="30sp"
+            android:visibility="gone"/>
+
+    </androidx.cardview.widget.CardView>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -47,14 +61,21 @@
             android:singleLine="true"
             android:ellipsize="end"/>
 
+        <!-- Styled size button / badge -->
         <TextView
             android:id="@+id/tvCartNote"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textSize="12sp"
-            android:textStyle="italic"
-            android:textColor="#D97706"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="2dp"
+            android:textSize="11sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:background="@drawable/bg_cart_size_missing"
+            android:clickable="true"
+            android:focusable="true"
             android:visibility="gone"/>
 
         <TextView

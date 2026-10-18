@@ -11,5 +11,8 @@ data class Food(
     val emoji: String,
     val bgColorStart: Int,
     val bgColorEnd: Int,
-    val imageRes: Int = 0
+    val imageRes: Int = 0,
+    val imageUri: String? = null,
+    val sizesJson: String? = null,
+    val toppingsJson: String? = null
 )

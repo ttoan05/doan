@@ -27,6 +27,7 @@ import com.example.foodhub.data.CartManager
 import com.example.foodhub.data.FavoriteManager
 import com.example.foodhub.data.NotificationStore
 import com.example.foodhub.data.OrderManager
+import com.example.foodhub.data.SearchHistoryManager
 import com.example.foodhub.data.VoucherStore
 import com.example.foodhub.data.model.AppNotification
 import com.example.foodhub.data.model.FavSort
@@ -229,7 +230,6 @@ class MainActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(16), dp(16), dp(16), dp(12))
         }
-        val tvLogo = TextView(this).apply { text = "🏠"; textSize = 22f }
         val tvTitle = TextView(this).apply {
             text = "FoodHub"; textSize = 20f
             setTextColor(getColor(R.color.red_primary))
@@ -302,7 +302,6 @@ class MainActivity : AppCompatActivity() {
         cartContainer.addView(tvCart)
         cartContainer.addView(cartBadgeView)
 
-        header.addView(tvLogo)
         header.addView(tvTitle)
         header.addView(cartContainer)
         contentContainer.addView(header)
@@ -317,8 +316,11 @@ class MainActivity : AppCompatActivity() {
         var searchQuery = ""
         var selectedCat = "Tất cả"
 
-        // Dòng hiển thị khi tìm không ra kết quả nào, tạo trước và thêm vào
-        // cuối các section bên dưới; mặc định ẩn.
+        // Tiêu chí bộ lọc nâng cao: Giá, Đánh giá, Khoảng cách
+        var selectedPriceFilter: String? = null // null: Tất cả, "<30k", "30k-70k", ">70k"
+        var selectedRating4Plus: Boolean = false
+        var selectedDistanceNear: Boolean = false // < 2km
+
         val tvSearchEmpty = TextView(this).apply {
             text = "Không tìm thấy món ăn hoặc nhà hàng phù hợp"
             textSize = 14f
@@ -341,6 +343,20 @@ class MainActivity : AppCompatActivity() {
                     it.name.lowercase().contains(q) || it.restaurant.lowercase().contains(q)
                 }
             }
+            if (selectedPriceFilter != null) {
+                list = list.filter {
+                    val p = FormatUtils.parsePrice(it.price)
+                    when (selectedPriceFilter) {
+                        "<30k" -> p < 30000
+                        "30k-70k" -> p in 30000..70000
+                        ">70k" -> p > 70000
+                        else -> true
+                    }
+                }
+            }
+            if (selectedRating4Plus) {
+                list = list.filter { it.rating >= 4.0 }
+            }
             foodAdapter?.submit(list)
         }
 
@@ -352,57 +368,250 @@ class MainActivity : AppCompatActivity() {
                     it.name.lowercase().contains(q) || it.desc.lowercase().contains(q)
                 }
             }
+            if (selectedRating4Plus) {
+                list = list.filter { it.rating >= 4.0 }
+            }
+            if (selectedDistanceNear) {
+                list = list.filter {
+                    val km = it.dist.replace("km", "").trim().toDoubleOrNull() ?: 99.0
+                    km <= 2.0
+                }
+            }
             restaurantAdapter?.submit(list)
         }
 
         fun updateSearchEmptyState() {
-            val noResult = searchQuery.isNotBlank() &&
+            val noResult = (searchQuery.isNotBlank() || selectedPriceFilter != null || selectedRating4Plus || selectedDistanceNear) &&
                     (foodAdapter?.currentCount() ?: 0) == 0 &&
                     (restaurantAdapter?.currentCount() ?: 0) == 0
             tvSearchEmpty.visibility = if (noResult) View.VISIBLE else View.GONE
         }
 
-        fun onSearchQueryChanged(text: String) {
-            searchQuery = text
+        fun applyAllFilters() {
             applyFoodFilter()
             applyRestaurantFilter()
             updateSearchEmptyState()
         }
 
-        val searchBar = EditText(this).apply {
-            hint = "🔍  Tìm kiếm món ăn, nhà hàng..."
+        val searchLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setBackgroundResource(R.drawable.bg_search)
+            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            lp.setMargins(dp(16), dp(12), dp(16), dp(8))
+            layoutParams = lp
+            setPadding(dp(14), dp(4), dp(10), dp(4))
+        }
+
+        val etSearch = EditText(this).apply {
+            hint = "Tìm kiếm món ăn, nhà hàng..."
             textSize = 14f
             setTextColor(getColor(R.color.text_dark))
             setHintTextColor(getColor(R.color.text_grey))
-            setBackgroundResource(R.drawable.bg_search)
-            setPadding(dp(14), dp(12), dp(14), dp(12))
+            setBackgroundColor(Color.TRANSPARENT)
             gravity = Gravity.CENTER_VERTICAL
             isSingleLine = true
             imeOptions = EditorInfo.IME_ACTION_SEARCH
-            val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            lp.setMargins(dp(16), dp(12), dp(16), dp(12))
+            val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
             layoutParams = lp
+            setPadding(0, dp(8), 0, dp(8))
+        }
 
-            addTextChangedListener(object : TextWatcher {
-                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-                override fun afterTextChanged(s: Editable?) {
-                    onSearchQueryChanged(s?.toString().orEmpty())
-                }
-            })
+        val btnClearSearch = ImageView(this).apply {
+            setImageResource(R.drawable.ic_search_clear)
+            val lp = LinearLayout.LayoutParams(dp(24), dp(24))
+            layoutParams = lp
+            setPadding(dp(3), dp(3), dp(3), dp(3))
+            visibility = View.GONE
+            background = null
+        }
 
-            setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                    // Ẩn bàn phím khi người dùng bấm nút tìm kiếm trên bàn phím
-                    val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-                    imm.hideSoftInputFromWindow(windowToken, 0)
-                    true
-                } else {
-                    false
+        searchLayout.addView(etSearch)
+        searchLayout.addView(btnClearSearch)
+        contentContainer.addView(searchLayout)
+
+        // Layout Panel chứa: Lịch sử tìm kiếm gần đây + Gợi ý từ khóa Hot + Bộ lọc nâng cao
+        val suggestionView = layoutInflater.inflate(R.layout.layout_search_suggestions, null)
+        val llRecentHeader = suggestionView.findViewById<LinearLayout>(R.id.llRecentHeader)
+        val hsvRecent = suggestionView.findViewById<HorizontalScrollView>(R.id.hsvRecentSearches)
+        val llRecentTags = suggestionView.findViewById<LinearLayout>(R.id.llRecentTags)
+        val btnClearAllHistory = suggestionView.findViewById<TextView>(R.id.btnClearHistory)
+        val llHotTags = suggestionView.findViewById<LinearLayout>(R.id.llHotTags)
+        val llFilterChips = suggestionView.findViewById<LinearLayout>(R.id.llFilterChips)
+
+        fun refreshRecentTags() {
+            val recents = SearchHistoryManager.getRecentSearches(this@MainActivity)
+            if (recents.isEmpty()) {
+                llRecentHeader.visibility = View.GONE
+                hsvRecent.visibility = View.GONE
+            } else {
+                llRecentHeader.visibility = View.VISIBLE
+                hsvRecent.visibility = View.VISIBLE
+                llRecentTags.removeAllViews()
+                recents.forEach { query ->
+                    val tagView = layoutInflater.inflate(R.layout.item_recent_search_tag, llRecentTags, false)
+                    val tvTitle = tagView.findViewById<TextView>(R.id.tvTagTitle)
+                    val btnRemove = tagView.findViewById<ImageView>(R.id.btnRemoveTag)
+                    tvTitle.text = query
+                    tagView.setOnClickListener {
+                        etSearch.setText(query)
+                        etSearch.setSelection(query.length)
+                        SearchHistoryManager.addSearchQuery(this@MainActivity, query)
+                        refreshRecentTags()
+                        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                        imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+                    }
+                    btnRemove.setOnClickListener {
+                        SearchHistoryManager.removeSearchQuery(this@MainActivity, query)
+                        refreshRecentTags()
+                    }
+                    llRecentTags.addView(tagView)
                 }
             }
         }
-        contentContainer.addView(searchBar)
+
+        btnClearAllHistory.setOnClickListener {
+            SearchHistoryManager.clearAll(this@MainActivity)
+            refreshRecentTags()
+        }
+
+        // Danh sách từ khóa hot: Trà sữa, Cơm sườn, Bánh mì chảo, Freeship
+        val hotKeywords = listOf("Trà sữa", "Cơm sườn", "Bánh mì chảo", "Freeship", "Gà rán", "Phở")
+        llHotTags.removeAllViews()
+        hotKeywords.forEach { hotKey ->
+            val tv = TextView(this).apply {
+                text = hotKey
+                textSize = 12f
+                setTextColor(Color.parseColor("#BE123C"))
+                setBackgroundResource(R.drawable.bg_search_tag_hot)
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+                val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.setMargins(0, 0, dp(8), 0)
+                layoutParams = lp
+                setOnClickListener {
+                    etSearch.setText(hotKey)
+                    etSearch.setSelection(hotKey.length)
+                    SearchHistoryManager.addSearchQuery(this@MainActivity, hotKey)
+                    refreshRecentTags()
+                    val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                    imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+                }
+            }
+            llHotTags.addView(tv)
+        }
+
+        // Dựng các Chip bộ lọc nâng cao
+        data class FilterChipItem(val id: String, val label: String)
+        val filterChips = listOf(
+            FilterChipItem("price_under_30k", "Dưới 30k"),
+            FilterChipItem("price_30k_70k", "30k - 70k"),
+            FilterChipItem("price_over_70k", "Trên 70k"),
+            FilterChipItem("rating_4_plus", "Đánh giá 4+ ⭐"),
+            FilterChipItem("distance_near", "Gần tôi (< 2km)")
+        )
+
+        val filterViews = mutableMapOf<String, TextView>()
+
+        fun updateFilterChipUi() {
+            filterChips.forEach { chip ->
+                val tv = filterViews[chip.id] ?: return@forEach
+                val isSelected = when (chip.id) {
+                    "price_under_30k" -> selectedPriceFilter == "<30k"
+                    "price_30k_70k" -> selectedPriceFilter == "30k-70k"
+                    "price_over_70k" -> selectedPriceFilter == ">70k"
+                    "rating_4_plus" -> selectedRating4Plus
+                    "distance_near" -> selectedDistanceNear
+                    else -> false
+                }
+                if (isSelected) {
+                    tv.setBackgroundResource(R.drawable.bg_filter_chip_active)
+                    tv.setTextColor(Color.WHITE)
+                    tv.setTypeface(null, android.graphics.Typeface.BOLD)
+                } else {
+                    tv.setBackgroundResource(R.drawable.bg_filter_chip_normal)
+                    tv.setTextColor(Color.parseColor("#475569"))
+                    tv.setTypeface(null, android.graphics.Typeface.NORMAL)
+                }
+            }
+        }
+
+        llFilterChips.removeAllViews()
+        filterChips.forEach { chip ->
+            val tv = TextView(this).apply {
+                text = chip.label
+                textSize = 12f
+                setPadding(dp(12), dp(6), dp(12), dp(6))
+                val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                lp.setMargins(0, 0, dp(8), 0)
+                layoutParams = lp
+                setOnClickListener {
+                    when (chip.id) {
+                        "price_under_30k" -> selectedPriceFilter = if (selectedPriceFilter == "<30k") null else "<30k"
+                        "price_30k_70k" -> selectedPriceFilter = if (selectedPriceFilter == "30k-70k") null else "30k-70k"
+                        "price_over_70k" -> selectedPriceFilter = if (selectedPriceFilter == ">70k") null else ">70k"
+                        "rating_4_plus" -> selectedRating4Plus = !selectedRating4Plus
+                        "distance_near" -> selectedDistanceNear = !selectedDistanceNear
+                    }
+                    updateFilterChipUi()
+                    applyAllFilters()
+                }
+            }
+            filterViews[chip.id] = tv
+            llFilterChips.addView(tv)
+        }
+        updateFilterChipUi()
+        refreshRecentTags()
+
+        // Mặc định ẩn suggestion panel cho đến khi người dùng chạm vào ô tìm kiếm hoặc đang có bộ lọc
+        suggestionView.visibility = View.GONE
+        contentContainer.addView(suggestionView)
+
+        fun onSearchQueryChanged(text: String) {
+            searchQuery = text
+            btnClearSearch.visibility = if (text.isNotEmpty()) View.VISIBLE else View.GONE
+            applyAllFilters()
+        }
+
+        etSearch.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus || etSearch.text.isNotEmpty()) {
+                refreshRecentTags()
+                suggestionView.visibility = View.VISIBLE
+            }
+        }
+
+        etSearch.setOnClickListener {
+            refreshRecentTags()
+            suggestionView.visibility = View.VISIBLE
+        }
+
+        btnClearSearch.setOnClickListener {
+            etSearch.setText("")
+            searchQuery = ""
+            applyAllFilters()
+        }
+
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                onSearchQueryChanged(s?.toString().orEmpty())
+            }
+        })
+
+        etSearch.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val q = etSearch.text.toString().trim()
+                if (q.isNotEmpty()) {
+                    SearchHistoryManager.addSearchQuery(this@MainActivity, q)
+                    refreshRecentTags()
+                }
+                val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+                true
+            } else {
+                false
+            }
+        }
 
         // Promo Banner - Chỉ hiển thị cho tài khoản chưa bấm DÙNG NGAY và chưa sử dụng FIRST30
         if (!VoucherStore.isWelcomeBannerDismissed(this)) {
@@ -485,8 +694,7 @@ class MainActivity : AppCompatActivity() {
                     selectedCat = cat
                     updateCatButtons()
                     // Lọc lại danh sách món ăn theo danh mục vừa chọn
-                    applyFoodFilter()
-                    updateSearchEmptyState()
+                    applyAllFilters()
                 }
             }
             catButtons.add(btn); catRow.addView(btn)

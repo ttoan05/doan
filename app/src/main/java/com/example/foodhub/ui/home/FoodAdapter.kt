@@ -1,6 +1,5 @@
 package com.example.foodhub.ui.home
 
-import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -57,21 +56,7 @@ class FoodAdapter(
         holder.tvReviews.text = "(${food.reviews})"
         holder.tvPrice.text = food.price
 
-        val actualImgRes = SampleData.resolveFoodImage(food.id, food.name, food.imageRes)
-        if (actualImgRes != 0) {
-            holder.ivImage.setImageResource(actualImgRes)
-            holder.ivImage.visibility = View.VISIBLE
-            holder.tvEmoji.visibility = View.GONE
-        } else {
-            holder.ivImage.visibility = View.GONE
-            holder.tvEmoji.visibility = View.VISIBLE
-            holder.tvEmoji.text = food.emoji
-            val gradient = GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                intArrayOf(food.bgColorStart, food.bgColorEnd)
-            )
-            holder.tvEmoji.background = gradient
-        }
+        SampleData.loadFoodImage(holder.ivImage, holder.tvEmoji, food)
 
         holder.btnAdd.setOnClickListener {
             onAddToCart(food)

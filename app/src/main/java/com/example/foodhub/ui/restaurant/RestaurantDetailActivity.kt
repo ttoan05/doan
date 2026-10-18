@@ -58,16 +58,7 @@ class RestaurantDetailActivity : AppCompatActivity() {
         val llPromoRow = findViewById<View>(R.id.llPromoRow)
         val tvBadge = findViewById<TextView>(R.id.tvRestaurantBadge)
 
-        if (restaurant.imageRes != 0) {
-            ivImage.setImageResource(restaurant.imageRes)
-        } else {
-            ivImage.setImageDrawable(
-                GradientDrawable(
-                    GradientDrawable.Orientation.TL_BR,
-                    intArrayOf(restaurant.bgColorStart, restaurant.bgColorEnd)
-                )
-            )
-        }
+        SampleData.loadRestaurantImage(ivImage, null, restaurant)
 
         tvName.text = restaurant.name
         tvDesc.text = restaurant.desc
@@ -122,7 +113,7 @@ class RestaurantDetailActivity : AppCompatActivity() {
                 },
                 onAddToCart = { food ->
                     CartManager.addFood(food)
-                    Toast.makeText(this, "Đã thêm ${food.name} vào giỏ hàng 🛒", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Đã thêm ${food.name} vào giỏ hàng!", Toast.LENGTH_SHORT).show()
                 }
             )
 

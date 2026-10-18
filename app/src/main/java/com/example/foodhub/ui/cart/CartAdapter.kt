@@ -1,7 +1,7 @@
 package com.example.foodhub.ui.cart
 
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,11 +10,14 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.foodhub.R
 import com.example.foodhub.data.CartManager
+import com.example.foodhub.data.model.CartItem
+import com.example.foodhub.utils.FoodSizeHelper
 import com.example.foodhub.utils.FormatUtils
 import com.example.foodhub.utils.SampleData
 
 class CartAdapter(
-    private val onChanged: () -> Unit
+    private val onChanged: () -> Unit,
+    private val onSelectSize: (CartItem) -> Unit
 ) : RecyclerView.Adapter<CartAdapter.CartViewHolder>() {
 
     class CartViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -39,44 +42,52 @@ class CartAdapter(
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
         val item = CartManager.getItems()[position]
 
-        val actualImgRes = SampleData.resolveFoodImage(item.foodId, item.name, item.imageRes)
-        if (actualImgRes != 0) {
-            holder.ivImage.setImageResource(actualImgRes)
-            holder.ivImage.visibility = View.VISIBLE
-            holder.tvEmoji.visibility = View.GONE
-        } else {
-            holder.ivImage.visibility = View.GONE
-            holder.tvEmoji.visibility = View.VISIBLE
-            holder.tvEmoji.text = item.emoji
-            holder.tvEmoji.background = GradientDrawable().apply {
-                setColor(Color.parseColor("#FDECEC"))
-                cornerRadius = 12f * holder.itemView.resources.displayMetrics.density
-            }
-        }
+        SampleData.loadCartItemImage(holder.ivImage, holder.tvEmoji, item)
+
         holder.tvName.text = item.name
         holder.tvRestaurant.text = item.restaurant
         holder.tvPrice.text = FormatUtils.money(item.price)
         holder.tvQuantity.text = item.quantity.toString()
 
-        if (item.note.isNotBlank()) {
-            holder.tvNote.visibility = View.VISIBLE
-            holder.tvNote.text = "📝 ${item.note}"
+        val hasChosenSize = FoodSizeHelper.hasSize(item)
+        holder.tvNote.visibility = View.VISIBLE
+
+        val density = holder.itemView.resources.displayMetrics.density
+        val padH = (8 * density).toInt()
+        val padV = (3 * density).toInt()
+
+        if (!hasChosenSize) {
+            holder.tvNote.setBackgroundResource(R.drawable.bg_cart_size_missing)
+            holder.tvNote.text = "Chưa chọn size • Chọn ngay ›"
+            holder.tvNote.setTextColor(Color.parseColor("#DC2626"))
+            holder.tvNote.setTypeface(null, Typeface.BOLD)
         } else {
-            holder.tvNote.visibility = View.GONE
+            holder.tvNote.setBackgroundResource(R.drawable.bg_cart_size_selected)
+            holder.tvNote.text = "${item.note} • Đổi ›"
+            holder.tvNote.setTextColor(Color.parseColor("#475569"))
+            holder.tvNote.setTypeface(null, Typeface.NORMAL)
+        }
+        holder.tvNote.setPadding(padH, padV, padH, padV)
+
+        holder.tvNote.setOnClickListener {
+            onSelectSize(item)
         }
 
         holder.btnMinus.setOnClickListener {
             CartManager.decrease(item)
+            notifyDataSetChanged()
             onChanged()
         }
 
         holder.btnPlus.setOnClickListener {
             CartManager.increase(item)
+            notifyDataSetChanged()
             onChanged()
         }
 
         holder.btnDelete.setOnClickListener {
             CartManager.remove(item)
+            notifyDataSetChanged()
             onChanged()
         }
     }

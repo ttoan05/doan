@@ -171,7 +171,7 @@ class AccountActivity : AppCompatActivity() {
 
     private fun refreshVoucherCount() {
         val tvCount = findViewById<TextView>(R.id.tvVoucherCount) ?: return
-        val count = VoucherStore.getTotalCount()
+        val count = VoucherStore.getAvailableCount(this)
         tvCount.text = "$count voucher"
     }
 

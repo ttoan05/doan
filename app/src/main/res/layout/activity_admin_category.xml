@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -9,61 +10,110 @@
     <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
+        android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@color/red_primary"
-        android:paddingStart="16dp"
+        android:background="@color/white"
+        android:elevation="1dp"
+        android:paddingStart="12dp"
         android:paddingEnd="16dp">
 
-        <TextView
+        <ImageView
             android:id="@+id/btnBack"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:gravity="center"
-            android:text="←"
-            android:textColor="@color/white"
-            android:textSize="26sp"
-            android:clickable="true"
-            android:focusable="true" />
+            android:src="@drawable/ic_arrow_back_dark"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="8dp"
+            android:contentDescription="Quay lại" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
-            android:text="Quản lý danh mục"
-            android:textColor="@color/white"
+            android:layout_marginEnd="8dp"
+            android:text="Danh mục &amp; Nhà hàng"
+            android:textColor="#0F172A"
             android:textSize="18sp"
-            android:textStyle="bold" />
-
-        <Button
-            android:id="@+id/btnAddCategory"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:text="➕ Thêm mới"
-            android:textSize="12sp"
             android:textStyle="bold"
-            android:textColor="@color/red_primary"
-            android:background="@drawable/bg_card"
+            android:singleLine="true"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/btnAddItem"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="+ Thêm"
+            android:textSize="12.5sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:background="@drawable/bg_btn_red"
+            android:gravity="center"
             android:paddingStart="14dp"
-            android:paddingEnd="14dp" />
+            android:paddingEnd="14dp"
+            android:clickable="true"
+            android:focusable="true" />
 
     </LinearLayout>
 
+    <!-- Segmented Tab Controls (Material 3 / iOS style) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:orientation="horizontal"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="14dp"
+        android:background="@drawable/bg_tab_segment_bg"
+        android:padding="3dp">
+
+        <!-- Tab 1: Danh mục món -->
+        <TextView
+            android:id="@+id/tabCategory"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Danh mục món"
+            android:textSize="13.5sp"
+            android:textStyle="bold"
+            android:textColor="#0F172A"
+            android:background="@drawable/bg_tab_segment_selected"
+            android:elevation="1dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <!-- Tab 2: Nhà hàng & Quán -->
+        <TextView
+            android:id="@+id/tabRestaurant"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="Nhà hàng &amp; Quán"
+            android:textSize="13.5sp"
+            android:textColor="#64748B"
+            android:background="@android:color/transparent"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+
+    <!-- Counter & Subtitle -->
     <TextView
-        android:id="@+id/tvCategoryCount"
+        android:id="@+id/tvCountSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:paddingTop="14dp"
+        android:paddingTop="12dp"
         android:paddingBottom="8dp"
-        android:text="Danh sách danh mục món ăn hệ thống"
-        android:textColor="#6B7280"
+        android:text="Tổng số: 6 danh mục món ăn"
+        android:textColor="#64748B"
         android:textSize="13sp" />
 
-    <!-- Categories list -->
+    <!-- Content Containers -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -71,13 +121,28 @@
         android:fillViewport="true">
 
         <LinearLayout
-            android:id="@+id/llCategoryContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:paddingBottom="24dp" />
+            android:paddingBottom="24dp">
+
+            <!-- Category List Container -->
+            <LinearLayout
+                android:id="@+id/llCategoryContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="visible" />
+
+            <!-- Restaurant List Container -->
+            <LinearLayout
+                android:id="@+id/llRestaurantContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+        </LinearLayout>
 
     </ScrollView>
 

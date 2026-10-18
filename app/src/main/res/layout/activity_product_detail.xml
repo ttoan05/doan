@@ -151,6 +151,176 @@
                     android:textColor="@color/text_grey"/>
             </LinearLayout>
 
+            <!-- Chọn Size / Khẩu phần -->
+            <LinearLayout
+                android:id="@+id/llSizeSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvSizeHeader"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Kích cỡ"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BẮT BUỘC"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="#DC2626"
+                        android:background="@drawable/bg_badge_required"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Chọn 1 kích cỡ"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_grey"/>
+
+                <LinearLayout
+                    android:id="@+id/rgSizeOptions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="8dp">
+
+                    <LinearLayout
+                        android:id="@+id/rowSizeStandard"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbSizeStandard"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:checked="true"
+                            android:text="Size Tiêu chuẩn (Vừa)"
+                            android:textColor="@color/text_dark"
+                            android:textSize="14sp"/>
+
+                        <TextView
+                            android:id="@+id/tvPriceSizeStandard"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+0đ"
+                            android:textColor="@color/text_grey"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="0.5dp"
+                        android:background="@color/divider"/>
+
+                    <LinearLayout
+                        android:id="@+id/rowSizeLarge"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbSizeLarge"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Size Lớn (Nhiều hơn)"
+                            android:textColor="@color/text_dark"
+                            android:textSize="14sp"/>
+
+                        <TextView
+                            android:id="@+id/tvPriceSizeLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="+10.000đ"
+                            android:textColor="@color/red_primary"
+                            android:textStyle="bold"
+                            android:textSize="13sp"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Topping & Món ăn kèm -->
+            <LinearLayout
+                android:id="@+id/llToppingsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvToppingsHeader"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Topping &amp; Món ăn kèm"
+                        android:textSize="15sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_dark"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="TÙY CHỌN"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        android:textColor="#4B5563"
+                        android:background="@drawable/bg_badge_optional"
+                        android:paddingStart="6dp"
+                        android:paddingEnd="6dp"
+                        android:paddingTop="2dp"
+                        android:paddingBottom="2dp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="Có thể chọn nhiều món ăn kèm"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_grey"/>
+
+                <LinearLayout
+                    android:id="@+id/llToppingsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical"/>
+            </LinearLayout>
+
             <!-- Ghi chú cho món -->
             <LinearLayout
                 android:layout_width="match_parent"

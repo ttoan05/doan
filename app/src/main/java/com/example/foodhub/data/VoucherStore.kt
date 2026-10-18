@@ -62,7 +62,8 @@ object VoucherStore {
     fun validate(
         rawCode: String,
         subtotal: Int,
-        shippingForFreeship: Int = 0
+        shippingForFreeship: Int = 0,
+        context: Context? = null
     ): VoucherResult {
         val code = rawCode.trim().uppercase()
         if (code.isEmpty()) {
@@ -70,6 +71,9 @@ object VoucherStore {
         }
         val voucher = VOUCHERS.find { it.code.uppercase() == code }
             ?: return VoucherResult(false, message = "Mã không tồn tại")
+        if (context != null && isUsed(context, code)) {
+            return VoucherResult(false, message = "Mã voucher này đã được sử dụng")
+        }
         if (subtotal < voucher.minOrder) {
             return VoucherResult(
                 false,
@@ -106,7 +110,7 @@ object VoucherStore {
     fun find(code: String): Voucher? =
         VOUCHERS.find { it.code.equals(code.trim(), ignoreCase = true) }
 
-    /** Lưu mã đã dùng (đánh dấu tick trong trang Voucher) cho tài khoản hiện tại. */
+    /** Lưu mã đã dùng (đánh dấu đã sử dụng) cho tài khoản hiện tại. */
     fun markUsed(context: Context, code: String) {
         val uid = UserProfileManager.currentUserId
         prefs(context).edit().putBoolean(keyUsed(uid, code), true).apply()
@@ -127,6 +131,13 @@ object VoucherStore {
      */
     fun getAvailableCount(context: Context): Int {
         return VOUCHERS.count { !isUsed(context, it.code) }
+    }
+
+    /**
+     * Lấy danh sách voucher còn khả dụng (chưa dùng) của tài khoản hiện tại.
+     */
+    fun getAvailableVouchers(context: Context): List<Voucher> {
+        return VOUCHERS.filter { !isUsed(context, it.code) }
     }
 
     /**

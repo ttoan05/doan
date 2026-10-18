@@ -41,30 +41,36 @@
     <LinearLayout
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="60dp"
         android:orientation="horizontal"
         android:background="@color/white"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
-        <LinearLayout android:id="@+id/tabHome"
+        <LinearLayout
+            android:id="@+id/tabHome"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
-            <TextView
+            android:padding="3dp"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
                 android:id="@+id/iconHome"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🏠" android:textSize="22sp"/>
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_home_filled"/>
             <TextView
                 android:id="@+id/labelHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Home"
-                android:textSize="10sp"
-                android:textColor="@color/red_primary"
+                android:textSize="10.5sp"
+                android:textColor="#EE4D2D"
                 android:textStyle="bold"/>
         </LinearLayout>
 
@@ -75,19 +81,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📋"
-                android:textSize="22sp"/>
+            android:padding="3dp"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:id="@+id/iconOrders"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_orders_outline"/>
             <TextView
                 android:id="@+id/labelOrders"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Đơn hàng"
-                android:textSize="10sp"
-                android:textColor="@color/text_grey"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
         </LinearLayout>
 
         <LinearLayout
@@ -97,19 +106,26 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:padding="3dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:clickable="true"
+            android:focusable="true">
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageView
+                    android:id="@+id/iconLikes"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_gravity="center"
-                    android:text="❤️"
-                    android:textSize="22sp"/>
-                <TextView android:id="@+id/tvFavBadge"
+                    android:src="@drawable/ic_nav_likes_outline"/>
+                <TextView
+                    android:id="@+id/tvFavBadge"
                     android:layout_width="wrap_content"
                     android:layout_height="16dp"
                     android:minWidth="16dp"
@@ -127,9 +143,10 @@
                 android:id="@+id/labelLikes"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Thích"
-                android:textSize="10sp"
-                android:textColor="@color/text_grey"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
         </LinearLayout>
 
         <LinearLayout
@@ -139,18 +156,24 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
+            android:padding="3dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:clickable="true"
+            android:focusable="true">
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageView
+                    android:id="@+id/iconNotifications"
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_gravity="center"
-                    android:text="🔔"
-                    android:textSize="22sp"/>
+                    android:src="@drawable/ic_nav_notif_outline"/>
                 <TextView
                     android:id="@+id/tvNotifBadge"
                     android:layout_width="wrap_content"
@@ -170,9 +193,10 @@
                 android:id="@+id/labelNotifications"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Thông báo"
-                android:textSize="10sp"
-                android:textColor="@color/text_grey"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
         </LinearLayout>
 
         <LinearLayout
@@ -182,19 +206,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
-            android:padding="4dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="👤"
-                android:textSize="22sp"/>
+            android:padding="3dp"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:id="@+id/iconAccount"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_account_outline"/>
             <TextView
                 android:id="@+id/labelAccount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Tôi"
-                android:textSize="10sp"
-                android:textColor="@color/text_grey"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
         </LinearLayout>
     </LinearLayout>
 </LinearLayout>

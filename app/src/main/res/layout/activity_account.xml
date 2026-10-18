@@ -14,7 +14,7 @@
         android:layout_height="90dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@color/red_primary"
+        android:background="@color/white"
         android:paddingStart="30dp"
         android:paddingEnd="20dp">
 
@@ -55,7 +55,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Trường Thanh Toàn"
-                android:textColor="@color/white"
+                android:textColor="#000000"
                 android:textSize="21sp"
                 android:textStyle="bold"
                 android:clickable="true"
@@ -66,8 +66,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="👑 Quản trị viên"
-                android:textColor="#FEE2E2"
+                android:text="Quản trị viên"
+                android:textColor="#555555"
                 android:textSize="12sp"
                 android:visibility="gone"/>
 
@@ -104,37 +104,31 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
                     android:layout_marginBottom="8dp"
-                    android:text="👑 QUẢN TRỊ VIÊN HỆ THỐNG"
+                    android:text="QUẢN TRỊ VIÊN HỆ THỐNG"
                     android:textColor="@color/red_primary"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
+                    android:letterSpacing="0.04"
                     android:textStyle="bold" />
 
                 <!-- Quản lý món ăn -->
                 <LinearLayout
                     android:id="@+id/btnAdminFoods"
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
+                    android:layout_height="68dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingStart="18dp"
-                    android:paddingEnd="12dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="16dp"
                     android:background="@drawable/bg_menu_card"
                     android:clickable="true"
                     android:focusable="true">
-
-                    <TextView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:gravity="center"
-                        android:text="🍲"
-                        android:textSize="24sp"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -142,24 +136,25 @@
                             android:layout_height="wrap_content"
                             android:text="Quản lý món ăn"
                             android:textColor="#000000"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Thêm, sửa, xóa món ăn nhà hàng"
                             android:textColor="#757575"
                             android:textSize="12sp"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="25dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="›"
                         android:textColor="#BDBDBD"
-                        android:textSize="25sp"/>
+                        android:textSize="24sp"/>
 
                 </LinearLayout>
 
@@ -167,28 +162,20 @@
                 <LinearLayout
                     android:id="@+id/btnAdminCategories"
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="68dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingStart="18dp"
-                    android:paddingEnd="12dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="16dp"
                     android:background="@drawable/bg_menu_card"
                     android:clickable="true"
                     android:focusable="true">
-
-                    <TextView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:gravity="center"
-                        android:text="📂"
-                        android:textSize="24sp"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -196,24 +183,25 @@
                             android:layout_height="wrap_content"
                             android:text="Quản lý danh mục"
                             android:textColor="#000000"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Thêm, đổi tên, xóa danh mục món"
                             android:textColor="#757575"
                             android:textSize="12sp"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="25dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="›"
                         android:textColor="#BDBDBD"
-                        android:textSize="25sp"/>
+                        android:textSize="24sp"/>
 
                 </LinearLayout>
 
@@ -221,28 +209,20 @@
                 <LinearLayout
                     android:id="@+id/btnAdminOrders"
                     android:layout_width="match_parent"
-                    android:layout_height="72dp"
-                    android:layout_marginTop="12dp"
+                    android:layout_height="68dp"
+                    android:layout_marginTop="10dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:paddingStart="18dp"
-                    android:paddingEnd="12dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="16dp"
                     android:background="@drawable/bg_menu_card"
                     android:clickable="true"
                     android:focusable="true">
-
-                    <TextView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:gravity="center"
-                        android:text="📋"
-                        android:textSize="24sp"/>
 
                     <LinearLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:layout_marginStart="12dp"
                         android:orientation="vertical">
 
                         <TextView
@@ -250,85 +230,82 @@
                             android:layout_height="wrap_content"
                             android:text="Quản lý đơn hàng"
                             android:textColor="#000000"
-                            android:textSize="17sp"
+                            android:textSize="16sp"
                             android:textStyle="bold"/>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
                             android:text="Xem chi tiết &amp; Xác nhận đơn hàng"
                             android:textColor="#757575"
                             android:textSize="12sp"/>
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="25dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center"
                         android:text="›"
                         android:textColor="#BDBDBD"
-                        android:textSize="25sp"/>
+                        android:textSize="24sp"/>
 
                 </LinearLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:layout_marginBottom="8dp"
-                    android:text="👤 CÁ NHÂN &amp; TIỆN ÍCH"
-                    android:textColor="#888888"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
             </LinearLayout>
+
+            <!-- Tiêu đề Cá nhân & Tiện ích -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
+                android:text="CÁ NHÂN &amp; TIỆN ÍCH"
+                android:textColor="#888888"
+                android:textSize="12sp"
+                android:letterSpacing="0.04"
+                android:textStyle="bold" />
 
             <!-- Ví Voucher -->
             <LinearLayout
                 android:id="@+id/btnVoucher"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
+                android:layout_height="60dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="18dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="16dp"
                 android:background="@drawable/bg_menu_card"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="🎟️"
-                    android:textSize="24sp"/>
-
-                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
                     android:text="Ví Voucher"
                     android:textColor="#000000"
-                    android:textSize="17sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"/>
 
                 <TextView
                     android:id="@+id/tvVoucherCount"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
                     android:text="0 voucher"
                     android:textColor="@color/red_primary"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:layout_width="25dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#BDBDBD"
-                    android:textSize="25sp"/>
+                    android:textSize="24sp"/>
 
             </LinearLayout>
 
@@ -337,40 +314,32 @@
             <LinearLayout
                 android:id="@+id/btnPayment"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="18dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="16dp"
                 android:background="@drawable/bg_menu_card"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="💳"
-                    android:textSize="24sp"/>
-
-                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
                     android:text="Thanh toán"
                     android:textColor="#000000"
-                    android:textSize="17sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:layout_width="25dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#BDBDBD"
-                    android:textSize="25sp"/>
+                    android:textSize="24sp"/>
 
             </LinearLayout>
 
@@ -379,40 +348,32 @@
             <LinearLayout
                 android:id="@+id/btnAddress"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="18dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="16dp"
                 android:background="@drawable/bg_menu_card"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="📍"
-                    android:textSize="24sp"/>
-
-                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
                     android:text="Địa chỉ"
                     android:textColor="#000000"
-                    android:textSize="17sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:layout_width="25dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#BDBDBD"
-                    android:textSize="25sp"/>
+                    android:textSize="24sp"/>
 
             </LinearLayout>
 
@@ -421,40 +382,32 @@
             <LinearLayout
                 android:id="@+id/btnHelp"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="18dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="16dp"
                 android:background="@drawable/bg_menu_card"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="🆘"
-                    android:textSize="24sp"/>
-
-                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
                     android:text="Trung tâm Trợ giúp"
                     android:textColor="#000000"
-                    android:textSize="17sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:layout_width="25dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#BDBDBD"
-                    android:textSize="25sp"/>
+                    android:textSize="24sp"/>
 
             </LinearLayout>
 
@@ -463,40 +416,32 @@
             <LinearLayout
                 android:id="@+id/btnSettings"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="18dp"
-                android:paddingEnd="12dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="16dp"
                 android:background="@drawable/bg_menu_card"
                 android:clickable="true"
                 android:focusable="true">
 
                 <TextView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="⚙️"
-                    android:textSize="24sp"/>
-
-                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="12dp"
                     android:text="Cài đặt"
                     android:textColor="#000000"
-                    android:textSize="17sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"/>
 
                 <TextView
-                    android:layout_width="25dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center"
                     android:text="›"
                     android:textColor="#BDBDBD"
-                    android:textSize="25sp"/>
+                    android:textSize="24sp"/>
 
             </LinearLayout>
 
@@ -506,7 +451,7 @@
                 android:id="@+id/btnLogout"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:background="@drawable/bg_btn_red_outline"
                 android:text="ĐĂNG XUẤT"
                 android:textColor="@color/red_primary"
@@ -522,11 +467,13 @@
     <LinearLayout
         android:id="@+id/bottomNavigation"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="60dp"
         android:orientation="horizontal"
         android:gravity="center"
         android:background="@color/white"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <!-- HOME -->
         <LinearLayout
@@ -536,21 +483,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
+            android:padding="3dp"
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="🏠"
-                android:textSize="22sp"/>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_home_outline"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Home"
-                android:textSize="11sp"
-                android:textColor="#888888"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
 
         </LinearLayout>
 
@@ -563,21 +511,22 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
+            android:padding="3dp"
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📋"
-                android:textSize="22sp"/>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_orders_outline"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Đơn hàng"
-                android:textSize="11sp"
-                android:textColor="#888888"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
 
         </LinearLayout>
 
@@ -590,21 +539,25 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
+            android:padding="3dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:clickable="true"
             android:focusable="true">
 
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_gravity="center"
-                    android:text="❤️"
-                    android:textSize="22sp"/>
+                    android:src="@drawable/ic_nav_likes_outline"/>
 
                 <TextView
                     android:id="@+id/tvFavBadge"
@@ -625,9 +578,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Thích"
-                android:textSize="11sp"
-                android:textColor="#888888"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
 
         </LinearLayout>
 
@@ -640,21 +594,25 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
+            android:padding="3dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
             android:clickable="true"
             android:focusable="true">
 
             <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clipChildren="false"
+                android:clipToPadding="false"
                 android:paddingStart="8dp"
                 android:paddingEnd="8dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
                     android:layout_gravity="center"
-                    android:text="🔔"
-                    android:textSize="22sp"/>
+                    android:src="@drawable/ic_nav_notif_outline"/>
 
                 <TextView
                     android:id="@+id/tvNotifBadge"
@@ -675,9 +633,10 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Thông báo"
-                android:textSize="11sp"
-                android:textColor="#888888"/>
+                android:textSize="10.5sp"
+                android:textColor="#555555"/>
 
         </LinearLayout>
 
@@ -690,22 +649,23 @@
             android:layout_weight="1"
             android:orientation="vertical"
             android:gravity="center"
+            android:padding="3dp"
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="👤"
-                android:textSize="22sp"/>
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/ic_nav_account_filled"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
                 android:text="Tôi"
-                android:textSize="11sp"
+                android:textSize="10.5sp"
                 android:textStyle="bold"
-                android:textColor="@color/red_primary"/>
+                android:textColor="#EE4D2D"/>
 
         </LinearLayout>
 

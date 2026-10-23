@@ -29,6 +29,7 @@ class RestaurantDetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        SampleData.reloadFromDb(this)
         FavoriteManager.init(this)
         CartManager.ensureLoaded(this)
         setContentView(R.layout.activity_restaurant_detail)

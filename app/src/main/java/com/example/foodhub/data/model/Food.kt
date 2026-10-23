@@ -14,5 +14,6 @@ data class Food(
     val imageRes: Int = 0,
     val imageUri: String? = null,
     val sizesJson: String? = null,
-    val toppingsJson: String? = null
+    val toppingsJson: String? = null,
+    val isAvailable: Boolean = true
 )

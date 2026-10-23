@@ -13,11 +13,9 @@ import com.example.foodhub.data.model.OrderStatus
  */
 object OrderManager {
 
-    private const val AUTO_ADVANCE = true
+    // Tắt tự động nhảy bước để đơn hàng chờ Admin duyệt trong AdminOrderActivity
+    private const val AUTO_ADVANCE = false
     private const val STEP_DELAY_MS = 15_000L
-
-    // Giới hạn lưu lịch sử đơn hàng: tầm 3 ngày (sau 3 ngày tự động biến mất)
-    private const val THREE_DAYS_MS = 3L * 24 * 60 * 60 * 1000L
 
     private const val FREE_SHIP_FROM = 50_000
     private const val SHIP_FEE = 15_000
@@ -55,23 +53,36 @@ object OrderManager {
      * Đảm bảo đơn hàng đã được nạp cho user hiện tại.
      */
     fun ensureLoaded(context: Context) {
-        val targetUserId = UserProfileManager.currentUserId
-        if (appContext == null || currentUserId != targetUserId) {
+        appContext = context.applicationContext
+        val targetUserId = if (UserProfileManager.currentUserId > 0) UserProfileManager.currentUserId else 1L
+        if (currentUserId != targetUserId || orders.isEmpty()) {
             init(context, targetUserId)
         }
     }
 
+    /**
+     * Cập nhật trạng thái đơn hàng trong RAM khi Admin hoặc hệ thống thay đổi trạng thái.
+     */
+    fun updateOrderStatus(orderId: String, status: OrderStatus, step: Int) {
+        val order = findById(orderId)
+        if (order != null) {
+            order.status = status
+            order.processStep = step
+            NotificationStore.onOrderProgress(order)
+            onChanged?.invoke()
+        }
+    }
+
+    /**
+     * Lấy toàn bộ lịch sử đơn hàng (không giới hạn số ngày để phục vụ việc xem lại và đặt lại món).
+     */
     fun getOrders(status: OrderStatus?): List<Order> {
-        val now = System.currentTimeMillis()
-        val valid = orders.filter { now - it.createdAt <= THREE_DAYS_MS }
-        val list = if (status == null) valid else valid.filter { it.status == status }
+        val list = if (status == null) orders else orders.filter { it.status == status }
         return list.sortedByDescending { it.createdAt }
     }
 
     fun countOrders(status: OrderStatus?): Int {
-        val now = System.currentTimeMillis()
-        val valid = orders.filter { now - it.createdAt <= THREE_DAYS_MS }
-        return if (status == null) valid.size else valid.count { it.status == status }
+        return if (status == null) orders.size else orders.count { it.status == status }
     }
 
     fun findById(id: String): Order? = orders.find { it.id == id }
@@ -91,12 +102,16 @@ object OrderManager {
         paymentMethod: String,
         orderNote: String = "",
         voucherCode: String = "",
-        discount: Int = 0
+        discount: Int = 0,
+        context: Context? = null
     ): List<Order> {
         val created = mutableListOf<Order>()
         val now = System.currentTimeMillis()
+        if (context != null) {
+            appContext = context.applicationContext
+        }
         val ctx = appContext
-        val uid = if (currentUserId > 0) currentUserId else UserProfileManager.currentUserId
+        val uid = if (currentUserId > 0) currentUserId else (if (UserProfileManager.currentUserId > 0) UserProfileManager.currentUserId else 1L)
 
         val grouped = cartItems.groupBy { it.restaurant }
         var remainingDiscount = discount
@@ -135,7 +150,7 @@ object OrderManager {
             created.add(order)
 
             // Lưu trực tiếp vào SQLite
-            if (ctx != null && uid > 0) {
+            if (ctx != null) {
                 DatabaseHelper.getInstance(ctx).insertOrder(uid, order)
             }
 
@@ -203,7 +218,7 @@ object OrderManager {
         val hour = 60 * minute
         val day = 24 * hour
 
-        val name = "Trường Thanh Toàn"
+        val name = "Trương Thanh Toàn"
         val phone = "+84 123 456 789"
         val address = "12 Nguyễn Huệ, Quận 1, TP.HCM"
 
@@ -248,11 +263,9 @@ object OrderManager {
             "Thanh toán khi nhận hàng (COD)", OrderStatus.DELIVERED
         )
         add(
-            "Trà Sữa Gong Cha", now - 2 * day,
-            listOf(
-                CartItem(5, "Trà sữa trân châu hoàng kim", "Trà Sữa Gong Cha", "🧋", 35_000, 2)
-            ),
-            "Ví MoMo", OrderStatus.DELIVERED
+            "Cơm tấm Quỳnh", now - 2 * day,
+            listOf(CartItem(4, "Cơm tấm sườn nướng", "Cơm tấm Quỳnh", "🍛", 35_000, 1)),
+            "Thanh toán khi nhận hàng (COD)", OrderStatus.CANCELLED, -1
         )
     }
 }

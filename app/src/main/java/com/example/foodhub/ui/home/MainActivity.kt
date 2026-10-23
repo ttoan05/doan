@@ -60,6 +60,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var labelNotifications: TextView
     private lateinit var labelAccount: TextView
 
+    // Tab icon references
+    private lateinit var iconHome: ImageView
+    private lateinit var iconOrders: ImageView
+    private lateinit var iconLikes: ImageView
+    private lateinit var iconNotifications: ImageView
+    private lateinit var iconAccount: ImageView
+
     // Badge giỏ hàng: giữ tham chiếu ở cấp Activity để có thể cập nhật lại
     // khi quay về từ CartActivity / CheckoutActivity (onResume).
     private var cartBadge: TextView? = null
@@ -82,12 +89,14 @@ class MainActivity : AppCompatActivity() {
 
     // Tab đang hiển thị, dùng để biết có cần refresh khi onResume không.
     private var currentTab: String = "home"
+    private var isFirstLaunch: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Nạp danh sách yêu thích và dữ liệu đã lưu
+        // Nạp danh sách món ăn, yêu thích và dữ liệu đã lưu
         try {
+            SampleData.reloadFromDb(this)
             FavoriteManager.init(this)
             CartManager.ensureLoaded(this)
             OrderManager.ensureLoaded(this)
@@ -106,6 +115,11 @@ class MainActivity : AppCompatActivity() {
         labelLikes         = findViewById(R.id.labelLikes)
         labelNotifications = findViewById(R.id.labelNotifications)
         labelAccount       = findViewById(R.id.labelAccount)
+        iconHome           = findViewById(R.id.iconHome)
+        iconOrders         = findViewById(R.id.iconOrders)
+        iconLikes          = findViewById(R.id.iconLikes)
+        iconNotifications  = findViewById(R.id.iconNotifications)
+        iconAccount        = findViewById(R.id.iconAccount)
         tvNotifBadge       = findViewById(R.id.tvNotifBadge)
         tvFavBadge         = findViewById(R.id.tvFavBadge)
 
@@ -142,11 +156,35 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Luôn nạp lại món ăn và danh mục mới nhất từ SQLite (nếu admin vừa thêm/sửa/xóa)
+        SampleData.reloadFromDb(this)
+
         CartManager.ensureLoaded(this)
         OrderManager.ensureLoaded(this)
         NotificationStore.ensureLoaded(this)
         // Cập nhật lại giỏ hàng (có thể đã thay đổi ở CartActivity/CheckoutActivity)
         refreshCartBadge()
+
+        if (isFirstLaunch) {
+            isFirstLaunch = false
+        } else {
+            if (currentTab == "home") {
+                showHomeContent()
+            }
+        }
+        if (currentTab == "home") {
+            homeFoodAdapter?.submit(SampleData.FOODS)
+            homeRestaurantAdapter?.submit(SampleData.RESTAURANTS)
+        }
+
+        SampleData.onFoodsChanged = {
+            runOnUiThread {
+                if (currentTab == "home") {
+                    showHomeContent()
+                }
+            }
+        }
+
         // Đơn hàng có thể vừa được tạo/hủy/tự chuyển trạng thái -> refresh nếu đang ở tab Đơn hàng
         if (currentTab == "orders") {
             showOrdersContent()
@@ -182,12 +220,13 @@ class MainActivity : AppCompatActivity() {
         NotificationStore.onChanged = null
         NotificationStore.onNewNotification = null
         FavoriteManager.onChanged = null
+        SampleData.onFoodsChanged = null
     }
 
     private fun selectTab(tab: String) {
         currentTab = tab
-        val redColor  = getColor(R.color.red_primary)
-        val greyColor = getColor(R.color.text_grey)
+        val orangeColor = Color.parseColor("#EE4D2D")
+        val greyColor   = Color.parseColor("#555555")
 
         // Reset all labels to grey
         listOf(labelHome, labelOrders, labelLikes, labelNotifications, labelAccount).forEach {
@@ -195,26 +234,43 @@ class MainActivity : AppCompatActivity() {
             it.setTypeface(null, android.graphics.Typeface.NORMAL)
         }
 
+        // Reset all icons to outline
+        iconHome.setImageResource(R.drawable.ic_nav_home_outline)
+        iconOrders.setImageResource(R.drawable.ic_nav_orders_outline)
+        iconLikes.setImageResource(R.drawable.ic_nav_likes_outline)
+        iconNotifications.setImageResource(R.drawable.ic_nav_notif_outline)
+        iconAccount.setImageResource(R.drawable.ic_nav_account_outline)
+
         when (tab) {
             "home" -> {
-                labelHome.setTextColor(redColor)
+                labelHome.setTextColor(orangeColor)
                 labelHome.setTypeface(null, android.graphics.Typeface.BOLD)
+                iconHome.setImageResource(R.drawable.ic_nav_home_filled)
+                SampleData.reloadFromDb(this)
                 showHomeContent()
             }
             "orders" -> {
-                labelOrders.setTextColor(redColor)
+                labelOrders.setTextColor(orangeColor)
                 labelOrders.setTypeface(null, android.graphics.Typeface.BOLD)
+                iconOrders.setImageResource(R.drawable.ic_nav_orders_filled)
                 showOrdersContent()
             }
             "likes" -> {
-                labelLikes.setTextColor(redColor)
+                labelLikes.setTextColor(orangeColor)
                 labelLikes.setTypeface(null, android.graphics.Typeface.BOLD)
+                iconLikes.setImageResource(R.drawable.ic_nav_likes_filled)
                 showFavoritesContent()
             }
             "notifications" -> {
-                labelNotifications.setTextColor(redColor)
+                labelNotifications.setTextColor(orangeColor)
                 labelNotifications.setTypeface(null, android.graphics.Typeface.BOLD)
+                iconNotifications.setImageResource(R.drawable.ic_nav_notif_filled)
                 showNotificationsContent()
+            }
+            "account" -> {
+                labelAccount.setTextColor(orangeColor)
+                labelAccount.setTypeface(null, android.graphics.Typeface.BOLD)
+                iconAccount.setImageResource(R.drawable.ic_nav_account_filled)
             }
         }
     }
@@ -335,7 +391,7 @@ class MainActivity : AppCompatActivity() {
         fun applyFoodFilter() {
             var list = SampleData.FOODS
             if (selectedCat != "Tất cả") {
-                list = list.filter { it.category == selectedCat }
+                list = list.filter { it.category.trim().equals(selectedCat.trim(), ignoreCase = true) }
             }
             if (searchQuery.isNotBlank()) {
                 val q = searchQuery.trim().lowercase()
@@ -676,7 +732,8 @@ class MainActivity : AppCompatActivity() {
 
         fun updateCatButtons() {
             catButtons.forEachIndexed { i, btn ->
-                val isActive = SampleData.CATEGORIES[i] == selectedCat
+                val catName = SampleData.CATEGORIES.getOrNull(i) ?: ""
+                val isActive = catName.equals(selectedCat, ignoreCase = true)
                 btn.setBackgroundResource(if (isActive) R.drawable.bg_cat_active else R.drawable.bg_cat_normal)
                 btn.setTextColor(if (isActive) Color.WHITE else getColor(R.color.text_grey2))
                 btn.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
@@ -684,10 +741,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         SampleData.CATEGORIES.forEach { cat ->
+            val isActive = cat.equals(selectedCat, ignoreCase = true)
             val btn = Button(this).apply {
                 text = cat; textSize = 14f
-                setBackgroundResource(if (cat == selectedCat) R.drawable.bg_cat_active else R.drawable.bg_cat_normal)
-                setTextColor(if (cat == selectedCat) Color.WHITE else getColor(R.color.text_grey2))
+                setBackgroundResource(if (isActive) R.drawable.bg_cat_active else R.drawable.bg_cat_normal)
+                setTextColor(if (isActive) Color.WHITE else getColor(R.color.text_grey2))
                 val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 lp.setMargins(0, 0, dp(8), 0); layoutParams = lp
                 setOnClickListener {
@@ -798,7 +856,7 @@ class MainActivity : AppCompatActivity() {
         contentContainer.removeAllViews()
         cartBadge = null // header của trang Home không còn hiển thị ở đây
 
-        // Header kèm chú thích lưu trong 3 ngày
+        // Header kèm chú thích xem toàn bộ lịch sử đơn hàng
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.WHITE)
@@ -873,8 +931,8 @@ class MainActivity : AppCompatActivity() {
             emptyView.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
             orderRecycler.visibility = if (list.isEmpty()) View.GONE else View.VISIBLE
             emptyView.text = when (selectedOrderFilter) {
-                null -> "Bạn chưa có đơn hàng nào trong 3 ngày qua"
-                OrderStatus.DELIVERED -> "Chưa có đơn hàng nào trong lịch sử (3 ngày qua)"
+                null -> "Bạn chưa có đơn hàng nào"
+                OrderStatus.DELIVERED -> "Chưa có đơn hàng nào đã hoàn thành"
                 OrderStatus.PROCESSING -> "Không có đơn hàng nào đang xử lý"
                 OrderStatus.SHIPPING -> "Không có đơn hàng nào đang giao"
                 OrderStatus.CANCELLED -> "Không có đơn hàng nào đã hủy"
@@ -1089,7 +1147,7 @@ class MainActivity : AppCompatActivity() {
 
             // Lọc + sắp xếp món ăn
             var foods = allFoods
-            if (favCategory != "Tất cả") foods = foods.filter { it.category == favCategory }
+            if (favCategory != "Tất cả") foods = foods.filter { it.category.trim().equals(favCategory.trim(), ignoreCase = true) }
             if (q.isNotEmpty()) {
                 foods = foods.filter {
                     it.name.lowercase().contains(q) || it.restaurant.lowercase().contains(q)
@@ -1146,7 +1204,8 @@ class MainActivity : AppCompatActivity() {
 
             // Các nút danh mục
             catButtons.forEachIndexed { i, btn ->
-                val isActive = SampleData.CATEGORIES[i] == favCategory
+                val catName = SampleData.CATEGORIES.getOrNull(i) ?: ""
+                val isActive = catName.equals(favCategory, ignoreCase = true)
                 btn.setBackgroundResource(if (isActive) R.drawable.bg_cat_active else R.drawable.bg_cat_normal)
                 btn.setTextColor(if (isActive) Color.WHITE else getColor(R.color.text_grey2))
                 btn.setTypeface(null, if (isActive) android.graphics.Typeface.BOLD else android.graphics.Typeface.NORMAL)
@@ -1452,7 +1511,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    // ─── Placeholder tabs ──────────────────────────────
+    // ─── Placeholder tabs ─────────────────────────────
     private fun showPlaceholder(icon: String, msg: String) {
         contentContainer.removeAllViews()
         cartBadge = null
@@ -1473,7 +1532,7 @@ class MainActivity : AppCompatActivity() {
         contentContainer.addView(wrapper)
     }
 
-    // ─── Toast ─────────────────────────────────────────
+    // ─── Toast ────────────────────────────────────────
     private fun showToast(msg: String) {
         tvToast.text = msg
         tvToast.visibility = View.VISIBLE

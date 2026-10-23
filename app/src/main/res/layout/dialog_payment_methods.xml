@@ -215,7 +215,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Quét mã QR hoặc liên kết ví MoMo tự động"
+                        android:text="Ví MoMo: 0867656271 (TRUONG THANH TOAN) • Quét QR"
                         android:textColor="#6B7280"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -294,7 +294,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="Quét mã QR từ 40+ ứng dụng ngân hàng"
+                        android:text="MB Bank: 0867656271 (TRUONG THANH TOAN) • VietQR 24/7"
                         android:textColor="#6B7280"
                         android:textSize="12sp" />
                 </LinearLayout>

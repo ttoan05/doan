@@ -27,6 +27,7 @@ import com.example.foodhub.ui.address.AddressActivity
 import com.example.foodhub.ui.admin.AdminCategoryActivity
 import com.example.foodhub.ui.admin.AdminFoodActivity
 import com.example.foodhub.ui.admin.AdminOrderActivity
+import com.example.foodhub.ui.admin.AdminRevenueActivity
 import com.example.foodhub.ui.auth.LoginActivity
 import com.example.foodhub.ui.home.MainActivity
 import com.example.foodhub.ui.settings.SettingsActivity
@@ -73,6 +74,10 @@ class AccountActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnAdminOrders).setOnClickListener {
             startActivity(Intent(this, AdminOrderActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnAdminRevenue).setOnClickListener {
+            startActivity(Intent(this, AdminRevenueActivity::class.java))
         }
 
         // ==========================================

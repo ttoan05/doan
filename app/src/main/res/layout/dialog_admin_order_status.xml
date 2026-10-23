@@ -77,7 +77,7 @@
         android:padding="12dp"
         android:layout_marginBottom="8dp"
         android:clickable="true"
-        android:focusable="true">
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="10dp"
@@ -93,6 +93,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvTitleConfirm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đã tiếp nhận (Xác nhận đơn)"
@@ -101,6 +102,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSubtitleConfirm"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nhà hàng đã xác nhận đơn của khách"
@@ -122,7 +124,7 @@
         android:padding="12dp"
         android:layout_marginBottom="8dp"
         android:clickable="true"
-        android:focusable="true">
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="10dp"
@@ -138,6 +140,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvTitlePreparing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đang chuẩn bị món"
@@ -146,6 +149,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSubtitlePreparing"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Bếp đang tiến hành chế biến món ăn"
@@ -167,7 +171,7 @@
         android:padding="12dp"
         android:layout_marginBottom="8dp"
         android:clickable="true"
-        android:focusable="true">
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="10dp"
@@ -183,6 +187,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvTitleShipping"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đang giao hàng"
@@ -191,6 +196,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSubtitleShipping"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đã bàn giao tài xế đang trên đường giao"
@@ -212,7 +218,7 @@
         android:padding="12dp"
         android:layout_marginBottom="8dp"
         android:clickable="true"
-        android:focusable="true">
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="10dp"
@@ -228,6 +234,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvTitleDelivered"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Đã giao thành công (Hoàn tất)"
@@ -236,6 +243,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSubtitleDelivered"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Khách đã nhận được đồ ăn thành công"
@@ -253,10 +261,10 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_btn_action_delete_sleek"
+        android:background="@drawable/bg_order_customer_box"
         android:padding="12dp"
         android:clickable="true"
-        android:focusable="true">
+        android:descendantFocusability="blocksDescendants">
 
         <View
             android:layout_width="10dp"
@@ -272,18 +280,20 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tvTitleCancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Hủy đơn hàng"
-                android:textColor="#DC2626"
+                android:textColor="#0F172A"
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/tvSubtitleCancel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Khách yêu cầu hủy hoặc nhà hàng hết món"
-                android:textColor="#991B1B"
+                android:textColor="#64748B"
                 android:textSize="12sp"
                 android:layout_marginTop="2dp" />
         </LinearLayout>

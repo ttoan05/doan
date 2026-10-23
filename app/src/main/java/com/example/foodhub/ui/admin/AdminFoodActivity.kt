@@ -15,6 +15,7 @@ import androidx.core.widget.addTextChangedListener
 import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.model.Food
+import com.example.foodhub.data.model.Restaurant
 import com.example.foodhub.utils.FoodSizeHelper
 import com.example.foodhub.utils.SampleData
 import java.io.File
@@ -165,6 +166,42 @@ class AdminFoodActivity : AppCompatActivity() {
             itemView.findViewById<TextView>(R.id.tvRestaurant).text = food.restaurant
             itemView.findViewById<TextView>(R.id.tvRating).text = food.rating.toString()
             itemView.findViewById<TextView>(R.id.tvReviews).text = "(${food.reviews})"
+
+            // Bind status badge & switch (Còn hàng / Tạm hết)
+            val tvStatusBadge = itemView.findViewById<TextView>(R.id.tvStatusBadge)
+            val switchAvailable = itemView.findViewById<androidx.appcompat.widget.SwitchCompat>(R.id.switchAvailable)
+
+            fun applyStatusBadge(isAvail: Boolean) {
+                if (isAvail) {
+                    tvStatusBadge.text = "● Còn hàng"
+                    tvStatusBadge.setTextColor(Color.parseColor("#16A34A"))
+                    tvStatusBadge.setBackgroundResource(R.drawable.bg_badge_status_green)
+                    itemView.alpha = 1.0f
+                } else {
+                    tvStatusBadge.text = "● Tạm hết"
+                    tvStatusBadge.setTextColor(Color.parseColor("#DC2626"))
+                    tvStatusBadge.setBackgroundResource(R.drawable.bg_badge_status_red)
+                    itemView.alpha = 0.65f
+                }
+            }
+
+            switchAvailable.setOnCheckedChangeListener(null)
+            switchAvailable.isChecked = food.isAvailable
+            applyStatusBadge(food.isAvailable)
+
+            switchAvailable.setOnCheckedChangeListener { _, isChecked ->
+                val ok = dbHelper.updateFoodAvailability(food.id, isChecked)
+                if (ok) {
+                    SampleData.reloadFromDb(this)
+                    applyStatusBadge(isChecked)
+                    val statusText = if (isChecked) "Còn hàng" else "Tạm hết"
+                    Toast.makeText(this, "${food.name}: Đã chuyển sang '$statusText'", Toast.LENGTH_SHORT).show()
+                    loadData()
+                } else {
+                    Toast.makeText(this, "Không thể cập nhật trạng thái món ăn", Toast.LENGTH_SHORT).show()
+                    switchAvailable.isChecked = !isChecked
+                }
+            }
 
             // Action buttons
             itemView.findViewById<View>(R.id.btnEdit).setOnClickListener {
@@ -434,7 +471,7 @@ class AdminFoodActivity : AppCompatActivity() {
                 val toppingsJson = if (collectedToppings.isNotEmpty()) FoodSizeHelper.toppingsToJson(collectedToppings) else null
 
                 val newId = dbHelper.getNextFoodId()
-                val resolvedImg = SampleData.resolveFoodImage(newId, name, 0)
+                val resolvedImg = SampleData.resolveFoodImage(newId, name, 0, category)
                 val newFood = Food(
                     id = newId,
                     name = name,
@@ -452,7 +489,34 @@ class AdminFoodActivity : AppCompatActivity() {
                     toppingsJson = toppingsJson
                 )
 
-                dbHelper.insertFood(newFood)
+                val rowId = dbHelper.insertFood(newFood)
+                if (rowId <= 0) {
+                    Toast.makeText(this, "Không thể lưu món ăn vào cơ sở dữ liệu!", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
+
+                // Tự động thêm quán ăn vào danh sách Nhà hàng nếu chưa có
+                try {
+                    val existingRests = dbHelper.getAllRestaurants()
+                    if (!existingRests.any { it.name.trim().equals(restaurant, ignoreCase = true) }) {
+                        val newRestId = dbHelper.getNextRestaurantId()
+                        val newRest = Restaurant(
+                            id = newRestId,
+                            name = restaurant,
+                            desc = "$category • Đang phục vụ",
+                            rating = 4.8,
+                            time = "20-30 phút",
+                            dist = "1.2 km",
+                            badge = "Món mới",
+                            bgColorStart = Color.parseColor("#F4A261"),
+                            bgColorEnd = Color.parseColor("#E76F51"),
+                            imageRes = resolvedImg,
+                            imageUri = selectedImagePath
+                        )
+                        dbHelper.insertRestaurant(newRest)
+                    }
+                } catch (_: Throwable) {}
+
                 SampleData.reloadFromDb(this)
                 Toast.makeText(this, "Đã thêm món '$name' thành công!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
@@ -515,7 +579,7 @@ class AdminFoodActivity : AppCompatActivity() {
                     }
                 } catch (_: Throwable) {}
             }
-            val res = SampleData.resolveFoodImage(food.id, food.name, food.imageRes)
+            val res = SampleData.resolveFoodImage(food.id, food.name, food.imageRes, food.category)
             if (res != 0) {
                 ivUploadedPreview.setImageResource(res)
                 ivUploadedPreview.visibility = View.VISIBLE
@@ -589,7 +653,7 @@ class AdminFoodActivity : AppCompatActivity() {
                 val sizesJson = if (collectedSizes.isNotEmpty()) FoodSizeHelper.sizesToJson(collectedSizes) else null
                 val toppingsJson = if (collectedToppings.isNotEmpty()) FoodSizeHelper.toppingsToJson(collectedToppings) else null
 
-                val resolvedImg = SampleData.resolveFoodImage(food.id, name, food.imageRes)
+                val resolvedImg = SampleData.resolveFoodImage(food.id, name, food.imageRes, category)
                 val updatedFood = food.copy(
                     name = name,
                     restaurant = restaurant,
@@ -602,12 +666,35 @@ class AdminFoodActivity : AppCompatActivity() {
                 )
 
                 val ok = dbHelper.updateFood(updatedFood)
-                SampleData.reloadFromDb(this)
-                if (ok) {
-                    Toast.makeText(this, "Đã cập nhật món '$name' thành công!", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this, "Đã lưu thông tin món", Toast.LENGTH_SHORT).show()
+                if (!ok) {
+                    Toast.makeText(this, "Không thể cập nhật món ăn vào cơ sở dữ liệu!", Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
                 }
+
+                // Tự động thêm quán ăn vào danh sách Nhà hàng nếu chưa có
+                try {
+                    val existingRests = dbHelper.getAllRestaurants()
+                    if (!existingRests.any { it.name.trim().equals(restaurant, ignoreCase = true) }) {
+                        val newRestId = dbHelper.getNextRestaurantId()
+                        val newRest = Restaurant(
+                            id = newRestId,
+                            name = restaurant,
+                            desc = "$category • Đang phục vụ",
+                            rating = 4.8,
+                            time = "20-30 phút",
+                            dist = "1.2 km",
+                            badge = "Món mới",
+                            bgColorStart = Color.parseColor("#F4A261"),
+                            bgColorEnd = Color.parseColor("#E76F51"),
+                            imageRes = resolvedImg,
+                            imageUri = selectedImagePath
+                        )
+                        dbHelper.insertRestaurant(newRest)
+                    }
+                } catch (_: Throwable) {}
+
+                SampleData.reloadFromDb(this)
+                Toast.makeText(this, "Đã cập nhật món '$name' thành công!", Toast.LENGTH_SHORT).show()
                 dialog.dismiss()
                 loadData()
             } catch (e: Throwable) {

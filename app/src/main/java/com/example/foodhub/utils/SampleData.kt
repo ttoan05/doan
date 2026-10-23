@@ -45,20 +45,38 @@ object SampleData {
         get() = _restaurants
 
     /**
-     * Tự động ánh xạ ảnh drawable chuẩn cho món ăn theo ID hoặc tên món.
+     * Tự động ánh xạ ảnh drawable chuẩn cho món ăn theo ID, tên món hoặc danh mục.
      */
-    fun resolveFoodImage(id: Int, name: String, storedRes: Int = 0): Int {
+    fun resolveFoodImage(id: Int, name: String, storedRes: Int = 0, category: String = ""): Int {
         val def = DEFAULT_FOODS.find { it.id == id || it.name.trim().equals(name.trim(), ignoreCase = true) }
         if (def != null && def.imageRes != 0) return def.imageRes
         val lower = name.lowercase()
+        val catLower = category.lowercase()
         return when {
-            lower.contains("phở") -> R.drawable.img_pho_bo
-            lower.contains("gà") -> R.drawable.img_ga_ran
-            lower.contains("bánh mì") -> R.drawable.img_banh_mi
-            lower.contains("cơm") -> R.drawable.img_com_tam
-            lower.contains("mì quảng") || (lower.contains("mì") && !lower.contains("bánh")) -> R.drawable.img_mi_quang
-            lower.contains("chanh") || lower.contains("nước") -> R.drawable.img_nuoc_chanh
-            else -> storedRes
+            lower.contains("phở") || catLower.contains("phở") -> R.drawable.img_pho_bo
+            lower.contains("gà") || catLower.contains("gà") -> R.drawable.img_ga_ran
+            lower.contains("bánh mì") || catLower.contains("bánh mì") -> R.drawable.img_banh_mi
+            lower.contains("cơm") || catLower.contains("cơm") -> R.drawable.img_com_tam
+            lower.contains("mì quảng") || lower.contains("mì") || catLower.contains("mì") -> R.drawable.img_mi_quang
+            lower.contains("chanh") || lower.contains("nước") || lower.contains("trà") || lower.contains("sữa") || catLower.contains("uống") -> R.drawable.img_nuoc_chanh
+            storedRes != 0 -> storedRes
+            else -> R.drawable.img_com_tam
+        }
+    }
+
+    /**
+     * Tự động ánh xạ ảnh drawable chuẩn cho nhà hàng theo ID hoặc tên quán.
+     */
+    fun resolveRestaurantImage(id: Int, name: String, storedRes: Int = 0): Int {
+        val def = DEFAULT_RESTAURANTS.find { it.id == id || it.name.trim().equals(name.trim(), ignoreCase = true) }
+        if (def != null && def.imageRes != 0) return def.imageRes
+        val lower = name.lowercase()
+        return when {
+            lower.contains("phở") -> R.drawable.img_res_pho
+            lower.contains("kfc") || lower.contains("gà") -> R.drawable.img_res_kfc
+            lower.contains("bánh mì") -> R.drawable.img_res_banh_mi
+            storedRes != 0 -> storedRes
+            else -> R.drawable.img_res_pho
         }
     }
 
@@ -102,7 +120,7 @@ object SampleData {
     }
 
     /**
-     * Hiển thị ảnh món ăn ưu tiên ảnh người dùng upload từ máy (imageUri), sau đó đến drawable tài nguyên, cuối cùng là emoji.
+     * Hiển thị ảnh món ăn ưu tiên ảnh người dùng upload từ máy (imageUri), sau đó đến drawable tài nguyên.
      */
     fun loadFoodImage(imageView: ImageView, emojiView: TextView?, food: Food) {
         val uri = if (!food.imageUri.isNullOrEmpty()) food.imageUri else resolveFoodImageUri(food.id, imageView.context)
@@ -121,15 +139,15 @@ object SampleData {
             }
         }
 
-        val res = resolveFoodImage(food.id, food.name, food.imageRes)
+        val res = resolveFoodImage(food.id, food.name, food.imageRes, food.category)
         if (res != 0) {
             imageView.setImageResource(res)
             imageView.visibility = View.VISIBLE
             emojiView?.visibility = View.GONE
         } else {
-            imageView.visibility = View.GONE
-            emojiView?.visibility = View.VISIBLE
-            emojiView?.text = food.emoji.ifEmpty { "🍲" }
+            imageView.setImageResource(R.drawable.img_com_tam)
+            imageView.visibility = View.VISIBLE
+            emojiView?.visibility = View.GONE
         }
     }
 
@@ -159,9 +177,9 @@ object SampleData {
             imageView.visibility = View.VISIBLE
             emojiView?.visibility = View.GONE
         } else {
-            imageView.visibility = View.GONE
-            emojiView?.visibility = View.VISIBLE
-            emojiView?.text = item.emoji.ifEmpty { "🍲" }
+            imageView.setImageResource(R.drawable.img_com_tam)
+            imageView.visibility = View.VISIBLE
+            emojiView?.visibility = View.GONE
         }
     }
 
@@ -184,8 +202,9 @@ object SampleData {
             }
         }
 
-        if (restaurant.imageRes != 0) {
-            imageView.setImageResource(restaurant.imageRes)
+        val res = resolveRestaurantImage(restaurant.id, restaurant.name, restaurant.imageRes)
+        if (res != 0) {
+            imageView.setImageResource(res)
             imageView.visibility = View.VISIBLE
         } else {
             val bgStart = if (restaurant.bgColorStart != 0) restaurant.bgColorStart else Color.parseColor("#E63946")
@@ -209,26 +228,38 @@ object SampleData {
         }
     }
 
+    var onFoodsChanged: (() -> Unit)? = null
+
     fun reloadFromDb(context: Context) {
         try {
             val db = DatabaseHelper.getInstance(context)
             val cats = db.getAllCategories()
             if (cats.isNotEmpty()) {
                 _categories.clear()
-                _categories.addAll(cats)
+                if (!cats.contains("Tất cả")) {
+                    _categories.add("Tất cả")
+                }
+                _categories.addAll(cats.filter { it != "Tất cả" })
             }
             val foods = db.getAllFoods()
             if (foods.isNotEmpty()) {
                 _foods.clear()
                 _foods.addAll(foods.map { f ->
-                    f.copy(imageRes = resolveFoodImage(f.id, f.name, f.imageRes))
+                    f.copy(imageRes = resolveFoodImage(f.id, f.name, f.imageRes, f.category))
                 })
+                foods.forEach { f ->
+                    val c = f.category.trim()
+                    if (c.isNotEmpty() && !_categories.any { it.equals(c, ignoreCase = true) }) {
+                        _categories.add(c)
+                    }
+                }
             }
             val rests = db.getAllRestaurants()
             if (rests.isNotEmpty()) {
                 _restaurants.clear()
                 _restaurants.addAll(rests)
             }
+            onFoodsChanged?.invoke()
         } catch (e: Throwable) {
             e.printStackTrace()
         }

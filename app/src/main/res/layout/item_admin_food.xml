@@ -171,7 +171,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginBottom="10dp" />
 
-        <!-- Bottom Row: Status + Action Buttons -->
+        <!-- Bottom Row: Status Tag + Switch + Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -180,9 +180,10 @@
 
             <!-- Status Tag -->
             <TextView
+                android:id="@+id/tvStatusBadge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="● Đang phục vụ"
+                android:text="● Còn hàng"
                 android:textColor="#16A34A"
                 android:textSize="11sp"
                 android:textStyle="bold"
@@ -191,6 +192,13 @@
                 android:paddingEnd="8dp"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp" />
+
+            <!-- Switch bật tắt Còn hàng / Tạm hết -->
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/switchAvailable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp" />
 
             <View
                 android:layout_width="0dp"

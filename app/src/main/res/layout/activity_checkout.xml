@@ -359,6 +359,51 @@
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"/>
 
+                    <!-- MoMo QR Preview Card -->
+                    <LinearLayout
+                        android:id="@+id/llMomoPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="30dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_field"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="📱 Ví MoMo: 0867656271 - TRUONG THANH TOAN"
+                            android:textColor="#9D174D"
+                            android:textSize="12.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Quét mã QR MoMo hoặc VietQR nhanh 24/7"
+                            android:textColor="#64748B"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/btnViewMomoQr"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_tag_momo"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
+                            android:text="Xem mã QR MoMo thanh toán"
+                            android:textColor="#9D174D"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
                     <RadioButton
                         android:id="@+id/rbBank"
                         android:layout_width="match_parent"
@@ -367,6 +412,51 @@
                         android:text="🏦  Chuyển khoản ngân hàng"
                         android:textSize="14sp"
                         android:textColor="@color/text_dark"/>
+
+                    <!-- Bank VietQR Preview Card -->
+                    <LinearLayout
+                        android:id="@+id/llBankPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="30dp"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="8dp"
+                        android:background="@drawable/bg_field"
+                        android:orientation="vertical"
+                        android:padding="10dp"
+                        android:visibility="gone">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="🏦 MB Bank: 0867656271 - TRUONG THANH TOAN"
+                            android:textColor="#1E40AF"
+                            android:textSize="12.5sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="MB Bank • Quét VietQR nhanh Napas 24/7"
+                            android:textColor="#64748B"
+                            android:textSize="11.5sp" />
+
+                        <TextView
+                            android:id="@+id/btnViewBankQr"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_tag_bank"
+                            android:paddingStart="10dp"
+                            android:paddingTop="5dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="5dp"
+                            android:text="Xem mã QR chuyển khoản ngân hàng"
+                            android:textColor="#1E40AF"
+                            android:textSize="11.5sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
                 </RadioGroup>
             </LinearLayout>
 

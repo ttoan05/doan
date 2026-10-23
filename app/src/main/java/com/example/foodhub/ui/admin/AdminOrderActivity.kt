@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
+import com.example.foodhub.data.OrderManager
 import com.example.foodhub.data.model.Order
 import com.example.foodhub.data.model.OrderStatus
 import com.example.foodhub.ui.order.OrderDetailActivity
@@ -66,7 +67,10 @@ class AdminOrderActivity : AppCompatActivity() {
         (dp * resources.displayMetrics.density).toInt()
 
     private fun loadOrders() {
-        allOrders = dbHelper.getAllOrders()
+        val fromDb = dbHelper.getAllOrders()
+        val inMemory = OrderManager.getOrders(null)
+        val combined = (fromDb + inMemory).distinctBy { it.id }.sortedByDescending { it.createdAt }
+        allOrders = combined
         renderTabs()
         renderOrderList()
     }
@@ -178,7 +182,8 @@ class AdminOrderActivity : AppCompatActivity() {
             val btnUpdate = itemView.findViewById<View>(R.id.btnUpdateStatus)
 
             // Header info
-            tvCode.text = "Mã đơn: #${order.code}"
+            val cleanOrderCode = if (order.code.startsWith("#")) order.code else "#${order.code}"
+            tvCode.text = "Mã đơn: $cleanOrderCode"
             OrderUi.styleStatus(tvStatus, order.status)
             tvMeta.text = "${FormatUtils.dateTime(order.createdAt)}  •  ${order.restaurant}"
 
@@ -226,55 +231,108 @@ class AdminOrderActivity : AppCompatActivity() {
 
         dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
 
+        val cleanOrderCode = if (order.code.startsWith("#")) order.code else "#${order.code}"
         dialogView.findViewById<TextView>(R.id.tvDialogOrderInfo).text =
-            "Đơn #${order.code} • Khách: ${order.receiverName}"
+            "Đơn $cleanOrderCode • Khách: ${order.receiverName}"
 
         dialogView.findViewById<View>(R.id.btnDialogClose).setOnClickListener {
             dialog.dismiss()
         }
 
+        // Lấy thông tin đơn hàng mới nhất
+        val currentOrder = dbHelper.getOrderById(order.id) ?: OrderManager.findById(order.id) ?: order
+
+        fun calculateStep(ord: Order): Int = when (ord.status) {
+            OrderStatus.PROCESSING -> if (ord.processStep >= 2) 2 else 1
+            OrderStatus.SHIPPING -> 3
+            OrderStatus.DELIVERED -> 4
+            OrderStatus.CANCELLED -> 5
+        }
+
+        fun applyOptionStyle(btnId: Int, titleId: Int, subtitleId: Int, isCurrent: Boolean) {
+            val btn = dialogView.findViewById<View>(btnId)
+            val title = dialogView.findViewById<TextView>(titleId)
+            val subtitle = dialogView.findViewById<TextView>(subtitleId)
+            if (isCurrent) {
+                btn.setBackgroundResource(R.drawable.bg_btn_action_delete_sleek)
+                title.setTextColor(Color.parseColor("#DC2626"))
+                subtitle.setTextColor(Color.parseColor("#991B1B"))
+            } else {
+                btn.setBackgroundResource(R.drawable.bg_order_customer_box)
+                title.setTextColor(Color.parseColor("#0F172A"))
+                subtitle.setTextColor(Color.parseColor("#64748B"))
+            }
+        }
+
+        fun refreshAllStyles(activeStep: Int) {
+            applyOptionStyle(R.id.btnStatusConfirm, R.id.tvTitleConfirm, R.id.tvSubtitleConfirm, activeStep == 1)
+            applyOptionStyle(R.id.btnStatusPreparing, R.id.tvTitlePreparing, R.id.tvSubtitlePreparing, activeStep == 2)
+            applyOptionStyle(R.id.btnStatusShipping, R.id.tvTitleShipping, R.id.tvSubtitleShipping, activeStep == 3)
+            applyOptionStyle(R.id.btnStatusDelivered, R.id.tvTitleDelivered, R.id.tvSubtitleDelivered, activeStep == 4)
+            applyOptionStyle(R.id.btnStatusCancel, R.id.tvTitleCancel, R.id.tvSubtitleCancel, activeStep == 5)
+        }
+
+        // Khởi tạo màu đỏ ngay khi mở dialog
+        refreshAllStyles(calculateStep(currentOrder))
+
+        fun updateStatusAndDismiss(newStatus: OrderStatus, newStep: Int, message: String) {
+            val targetStep = when (newStatus) {
+                OrderStatus.PROCESSING -> if (newStep >= 2) 2 else 1
+                OrderStatus.SHIPPING -> 3
+                OrderStatus.DELIVERED -> 4
+                OrderStatus.CANCELLED -> 5
+            }
+
+            // 1. CHUYỂN MÀU ĐỎ NGAY LẬP TỨC tại mục vừa bấm (người dùng nhìn thấy ngay)
+            refreshAllStyles(targetStep)
+
+            // 2. Cập nhật dữ liệu ngay vào SQLite và OrderManager
+            currentOrder.status = newStatus
+            currentOrder.processStep = newStep
+            order.status = newStatus
+            order.processStep = newStep
+            dbHelper.updateOrderStatus(order.id, newStatus, newStep)
+            OrderManager.updateOrderStatus(order.id, newStatus, newStep)
+            loadOrders()
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+            // 3. Đóng dialog mượt mà sau 350ms để người dùng kịp thấy mục đó đã sáng đỏ xác nhận
+            dialogView.postDelayed({
+                try {
+                    if (!isFinishing && !isDestroyed && dialog.isShowing) {
+                        dialog.dismiss()
+                    }
+                } catch (_: Exception) {}
+            }, 350L)
+        }
+
         // 1. Xác nhận đơn
         dialogView.findViewById<View>(R.id.btnStatusConfirm).setOnClickListener {
-            dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 1)
-            Toast.makeText(this, "Đã xác nhận đơn hàng #${order.code}", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-            loadOrders()
+            updateStatusAndDismiss(OrderStatus.PROCESSING, 1, "Đã xác nhận đơn hàng $cleanOrderCode")
         }
 
         // 2. Đang chuẩn bị món
         dialogView.findViewById<View>(R.id.btnStatusPreparing).setOnClickListener {
-            dbHelper.updateOrderStatus(order.id, OrderStatus.PROCESSING, 2)
-            Toast.makeText(this, "Đã chuyển sang: Đang chuẩn bị món", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-            loadOrders()
+            updateStatusAndDismiss(OrderStatus.PROCESSING, 2, "Đã chuyển sang: Đang chuẩn bị món")
         }
 
         // 3. Đang giao hàng
         dialogView.findViewById<View>(R.id.btnStatusShipping).setOnClickListener {
-            dbHelper.updateOrderStatus(order.id, OrderStatus.SHIPPING, 3)
-            Toast.makeText(this, "Đã chuyển sang: Đang giao hàng", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-            loadOrders()
+            updateStatusAndDismiss(OrderStatus.SHIPPING, 3, "Đã chuyển sang: Đang giao hàng")
         }
 
         // 4. Hoàn tất đơn hàng
         dialogView.findViewById<View>(R.id.btnStatusDelivered).setOnClickListener {
-            dbHelper.updateOrderStatus(order.id, OrderStatus.DELIVERED, 4)
-            Toast.makeText(this, "Đã hoàn tất đơn hàng #${order.code}!", Toast.LENGTH_SHORT).show()
-            dialog.dismiss()
-            loadOrders()
+            updateStatusAndDismiss(OrderStatus.DELIVERED, 4, "Đã hoàn tất đơn hàng $cleanOrderCode!")
         }
 
         // 5. Hủy đơn
         dialogView.findViewById<View>(R.id.btnStatusCancel).setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Xác nhận hủy đơn hàng")
-                .setMessage("Bạn có chắc chắn muốn hủy đơn hàng #${order.code}?")
+                .setMessage("Bạn có chắc chắn muốn hủy đơn hàng $cleanOrderCode?")
                 .setPositiveButton("Hủy đơn") { _, _ ->
-                    dbHelper.updateOrderStatus(order.id, OrderStatus.CANCELLED, -1)
-                    Toast.makeText(this, "Đã hủy đơn hàng #${order.code}", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss()
-                    loadOrders()
+                    updateStatusAndDismiss(OrderStatus.CANCELLED, -1, "Đã hủy đơn hàng $cleanOrderCode")
                 }
                 .setNegativeButton("Không", null)
                 .show()

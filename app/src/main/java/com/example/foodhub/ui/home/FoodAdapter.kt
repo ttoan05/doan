@@ -58,8 +58,22 @@ class FoodAdapter(
 
         SampleData.loadFoodImage(holder.ivImage, holder.tvEmoji, food)
 
-        holder.btnAdd.setOnClickListener {
-            onAddToCart(food)
+        if (food.isAvailable) {
+            holder.itemView.alpha = 1.0f
+            holder.btnAdd.isEnabled = true
+            holder.btnAdd.text = "+ Thêm"
+            holder.btnAdd.setBackgroundResource(R.drawable.bg_btn_red_soft)
+            holder.btnAdd.setTextColor(holder.itemView.context.getColor(R.color.red_primary))
+            holder.btnAdd.setOnClickListener {
+                onAddToCart(food)
+            }
+        } else {
+            holder.itemView.alpha = 0.55f
+            holder.btnAdd.isEnabled = false
+            holder.btnAdd.text = "Tạm hết"
+            holder.btnAdd.setBackgroundResource(R.drawable.bg_btn_disabled_soft)
+            holder.btnAdd.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            holder.btnAdd.setOnClickListener(null)
         }
 
         holder.itemView.setOnClickListener {

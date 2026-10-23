@@ -1,7 +1,10 @@
 package com.example.foodhub.ui.checkout
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
@@ -22,6 +25,9 @@ import com.example.foodhub.data.model.Voucher
 import com.example.foodhub.ui.home.MainActivity
 import com.example.foodhub.ui.order.OrderUi
 import com.example.foodhub.utils.FormatUtils
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 
 class CheckoutActivity : AppCompatActivity() {
 
@@ -75,10 +81,57 @@ class CheckoutActivity : AppCompatActivity() {
         btnRemoveVoucher = findViewById(R.id.btnRemoveVoucher)
 
         rgPayment = findViewById(R.id.rgPayment)
-        when (PaymentStore.getDefaultMethod(this)) {
-            PaymentStore.METHOD_MOMO -> rgPayment.check(R.id.rbMomo)
-            PaymentStore.METHOD_BANK -> rgPayment.check(R.id.rbBank)
-            else -> rgPayment.check(R.id.rbCod)
+        val llMomoPreview = findViewById<LinearLayout>(R.id.llMomoPreview)
+        val llBankPreview = findViewById<LinearLayout>(R.id.llBankPreview)
+        val btnViewMomoQr = findViewById<View>(R.id.btnViewMomoQr)
+        val btnViewBankQr = findViewById<View>(R.id.btnViewBankQr)
+
+        fun updatePaymentPreview(checkedId: Int) {
+            llMomoPreview?.visibility = if (checkedId == R.id.rbMomo) View.VISIBLE else View.GONE
+            llBankPreview?.visibility = if (checkedId == R.id.rbBank) View.VISIBLE else View.GONE
+        }
+
+        rgPayment.setOnCheckedChangeListener { _, checkedId ->
+            updatePaymentPreview(checkedId)
+        }
+
+        // Mặc định luôn là Thanh toán khi nhận hàng (COD)
+        PaymentStore.setDefaultMethod(this, PaymentStore.METHOD_COD)
+        rgPayment.check(R.id.rbCod)
+        updatePaymentPreview(R.id.rbCod)
+
+        btnViewMomoQr?.setOnClickListener {
+            val name = etReceiver.text.toString().trim().ifEmpty { "Khách hàng" }
+            val phone = etPhone.text.toString().trim().ifEmpty { "0000" }
+            val subtotal = CartManager.totalPrice()
+            val shipping = calculateShipping()
+            val finalTotal = (subtotal + shipping - appliedDiscount).coerceAtLeast(0)
+            showPaymentInstructionDialog(
+                name = name,
+                phone = phone,
+                address = etAddress.text.toString().trim(),
+                orderNote = etOrderNote.text.toString().trim(),
+                method = "Ví MoMo",
+                finalTotal = finalTotal,
+                isOrderConfirmation = false
+            )
+        }
+
+        btnViewBankQr?.setOnClickListener {
+            val name = etReceiver.text.toString().trim().ifEmpty { "Khách hàng" }
+            val phone = etPhone.text.toString().trim().ifEmpty { "0000" }
+            val subtotal = CartManager.totalPrice()
+            val shipping = calculateShipping()
+            val finalTotal = (subtotal + shipping - appliedDiscount).coerceAtLeast(0)
+            showPaymentInstructionDialog(
+                name = name,
+                phone = phone,
+                address = etAddress.text.toString().trim(),
+                orderNote = etOrderNote.text.toString().trim(),
+                method = "Chuyển khoản ngân hàng",
+                finalTotal = finalTotal,
+                isOrderConfirmation = false
+            )
         }
         llCheckoutDiscountRow = findViewById(R.id.llCheckoutDiscountRow)
         tvCheckoutDiscount = findViewById(R.id.tvCheckoutDiscount)
@@ -312,9 +365,17 @@ class CheckoutActivity : AppCompatActivity() {
         val shipping = calculateShipping()
         val finalTotal = (subtotal + shipping - appliedDiscount).coerceAtLeast(0)
 
-        // Nếu là MoMo hoặc Chuyển khoản ngân hàng -> Hiện hướng dẫn và mã QR giả lập
+        // Nếu là MoMo hoặc Chuyển khoản ngân hàng -> Hiện hướng dẫn và mã QR VietQR thực tế
         if (method == "Ví MoMo" || method == "Chuyển khoản ngân hàng") {
-            showPaymentInstructionDialog(name, phone, address, orderNote, method, finalTotal)
+            showPaymentInstructionDialog(
+                name = name,
+                phone = phone,
+                address = address,
+                orderNote = orderNote,
+                method = method,
+                finalTotal = finalTotal,
+                isOrderConfirmation = true
+            )
         } else {
             // Thanh toán COD -> Tạo đơn ngay
             executeOrderCreation(name, phone, address, orderNote, method)
@@ -327,85 +388,124 @@ class CheckoutActivity : AppCompatActivity() {
         address: String,
         orderNote: String,
         method: String,
-        finalTotal: Int
+        finalTotal: Int,
+        isOrderConfirmation: Boolean = true
     ) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_vietqr_payment, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+
         val isMomo = method == "Ví MoMo"
-        val title = if (isMomo) "Thanh toán qua Ví MoMo" else "Thanh toán Chuyển khoản Ngân hàng"
+        val tvTitle = dialogView.findViewById<TextView>(R.id.tvQrDialogTitle)
+        val tvSub = dialogView.findViewById<TextView>(R.id.tvQrDialogSub)
+        val ivQrCode = dialogView.findViewById<ImageView>(R.id.ivQrCode)
+        val pbQrLoading = dialogView.findViewById<ProgressBar>(R.id.pbQrLoading)
+        val tvQrError = dialogView.findViewById<TextView>(R.id.tvQrError)
 
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(40, 20, 40, 20)
-            gravity = Gravity.CENTER_HORIZONTAL
+        val tvBankName = dialogView.findViewById<TextView>(R.id.tvBankName)
+        val tvAccountName = dialogView.findViewById<TextView>(R.id.tvAccountName)
+        val tvAccountNumber = dialogView.findViewById<TextView>(R.id.tvAccountNumber)
+        val tvAmount = dialogView.findViewById<TextView>(R.id.tvAmount)
+        val tvTransferNote = dialogView.findViewById<TextView>(R.id.tvTransferNote)
+        val tvHint = dialogView.findViewById<TextView>(R.id.tvQrHint)
+
+        val btnCopyAccount = dialogView.findViewById<View>(R.id.btnCopyAccount)
+        val btnCopyAmount = dialogView.findViewById<View>(R.id.btnCopyAmount)
+        val btnCopyNote = dialogView.findViewById<View>(R.id.btnCopyNote)
+        val btnConfirmPaid = dialogView.findViewById<Button>(R.id.btnConfirmPaid)
+        val btnCancelQrPayment = dialogView.findViewById<View>(R.id.btnCancelQrPayment)
+        val btnQrDialogClose = dialogView.findViewById<View>(R.id.btnQrDialogClose)
+
+        // Thông tin tài khoản nhận tiền thực tế của Trương Thanh Toàn (MB Bank)
+        val bankCode = "MB"
+        val bankDisplayName = "MB Bank (Ngân hàng Quân Đội)"
+        val accountNumber = "0867656271"
+        val accountName = "TRUONG THANH TOAN"
+        val phoneSuffix = phone.filter { it.isDigit() }.takeLast(4).ifEmpty { "0000" }
+        val transferSyntax = "FOODHUB $phoneSuffix"
+
+        if (isMomo) {
+            tvTitle.text = "Quét mã MoMo thanh toán"
+            tvSub.text = "Ví MoMo • Quét mã QR hoặc VietQR chuyển tiền"
+            tvBankName.text = "Ví MoMo / MB Bank"
+            tvHint?.text = "💡 Mở ứng dụng MoMo hoặc ứng dụng Ngân hàng của bạn để quét mã QR thanh toán nhanh."
+        } else {
+            tvTitle.text = "Chuyển khoản ngân hàng (VietQR)"
+            tvSub.text = "MB Bank • Quét mã QR Napas 24/7"
+            tvBankName.text = bankDisplayName
+            tvHint?.text = "💡 Mở app MB Bank, Vietcombank, Techcombank, VPBank... hoặc MoMo để quét mã VietQR chuyển khoản nhanh 24/7."
         }
 
-        // Khung mã QR giả lập
-        val qrCard = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundResource(R.drawable.bg_card)
-            setPadding(30, 24, 30, 24)
-            val lp = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            lp.setMargins(0, 0, 0, 16)
-            layoutParams = lp
+        tvAccountName.text = accountName
+        tvAccountNumber.text = accountNumber
+        tvAmount.text = FormatUtils.money(finalTotal)
+        tvTransferNote.text = transferSyntax
+
+        fun copyToClipboard(label: String, text: String) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText(label, text)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Đã sao chép $label: $text", Toast.LENGTH_SHORT).show()
         }
 
-        val tvQrIcon = TextView(this).apply {
-            text = if (isMomo) "📱" else "🏦"
-            textSize = 48f
-            gravity = Gravity.CENTER
-        }
-        val tvQrCodeVisual = TextView(this).apply {
-            text = "▣  QR PAYMENT CODE  ▣\n[ FOODHUB SCAN TO PAY ]"
-            textSize = 14f
-            setTypeface(Typeface.MONOSPACE, Typeface.BOLD)
-            setTextColor(Color.parseColor("#1F2937"))
-            gravity = Gravity.CENTER
-            setPadding(0, 8, 0, 4)
-        }
-        qrCard.addView(tvQrIcon)
-        qrCard.addView(tvQrCodeVisual)
-        container.addView(qrCard)
+        btnCopyAccount.setOnClickListener { copyToClipboard("Số tài khoản", accountNumber) }
+        btnCopyAmount.setOnClickListener { copyToClipboard("Số tiền", finalTotal.toString()) }
+        btnCopyNote.setOnClickListener { copyToClipboard("Nội dung", transferSyntax) }
 
-        // Bảng thông tin chuyển khoản
-        val tvInfo = TextView(this).apply {
-            val bankName = if (isMomo) "Ví điện tử MoMo" else "MB Bank (Ngân hàng Quân Đội)"
-            val accNumber = if (isMomo) "0988 776 655" else "8888 0988 776 655"
-            val owner = "CÔNG TY CỔ PHẦN FOODHUB"
-            val syntax = "FOODHUB ${phone.takeLast(6)}"
-
-            text = """
-                • Ngân hàng / Ví: $bankName
-                • Số tài khoản / Số ví: $accNumber
-                • Người nhận: $owner
-                • Số tiền cần chuyển: ${FormatUtils.money(finalTotal)}
-                • Nội dung chuyển khoản: $syntax
-            """.trimIndent()
-            textSize = 13f
-            setTextColor(Color.parseColor("#374151"))
-            setLineSpacing(6f, 1f)
-            setPadding(0, 0, 0, 16)
-        }
-        container.addView(tvInfo)
-
-        val tvNote = TextView(this).apply {
-            text = "Vui lòng quét mã hoặc chuyển đúng số tiền trên. Sau khi chuyển xong, bấm nút 'Xác nhận đã chuyển tiền' bên dưới để hoàn tất đơn hàng."
-            textSize = 12f
-            setTextColor(Color.parseColor("#9CA3AF"))
-            setTypeface(null, Typeface.ITALIC)
-        }
-        container.addView(tvNote)
-
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setView(container)
-            .setPositiveButton("✓ Xác nhận đã chuyển tiền") { _, _ ->
+        if (isOrderConfirmation) {
+            btnConfirmPaid.text = if (isMomo) "✓  TÔI ĐÃ THANH TOÁN MOMO THÀNH CÔNG" else "✓  TÔI ĐÃ CHUYỂN KHOẢN THÀNH CÔNG"
+            btnConfirmPaid.setOnClickListener {
+                dialog.dismiss()
                 executeOrderCreation(name, phone, address, orderNote, method)
             }
-            .setNegativeButton("Hủy / Quay lại", null)
-            .show()
+            btnCancelQrPayment.visibility = View.VISIBLE
+            btnCancelQrPayment.setOnClickListener { dialog.dismiss() }
+        } else {
+            btnConfirmPaid.text = "ĐÃ HIỂU / ĐÓNG"
+            btnConfirmPaid.setOnClickListener { dialog.dismiss() }
+            btnCancelQrPayment.visibility = View.GONE
+        }
+
+        btnQrDialogClose.setOnClickListener { dialog.dismiss() }
+
+        // Tải ảnh mã QR động từ VietQR API
+        Thread {
+            try {
+                val encodedSyntax = URLEncoder.encode(transferSyntax, "UTF-8")
+                val encodedName = URLEncoder.encode(accountName, "UTF-8")
+                val qrUrl = "https://img.vietqr.io/image/$bankCode-$accountNumber-compact2.png?amount=$finalTotal&addInfo=$encodedSyntax&accountName=$encodedName"
+
+                val url = URL(qrUrl)
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 10000
+                conn.readTimeout = 10000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+                conn.doInput = true
+                conn.connect()
+                val bitmap = BitmapFactory.decodeStream(conn.inputStream)
+                runOnUiThread {
+                    if (bitmap != null) {
+                        ivQrCode.setImageBitmap(bitmap)
+                        pbQrLoading.visibility = View.GONE
+                        ivQrCode.visibility = View.VISIBLE
+                    } else {
+                        pbQrLoading.visibility = View.GONE
+                        tvQrError.visibility = View.VISIBLE
+                    }
+                }
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                runOnUiThread {
+                    pbQrLoading.visibility = View.GONE
+                    tvQrError.visibility = View.VISIBLE
+                }
+            }
+        }.start()
+
+        dialog.show()
     }
 
     private fun executeOrderCreation(
@@ -440,7 +540,8 @@ class CheckoutActivity : AppCompatActivity() {
             paymentMethod = method,
             orderNote = orderNote,
             voucherCode = voucherCode,
-            discount = appliedDiscount
+            discount = appliedDiscount,
+            context = this
         )
 
         // Đánh dấu mã đã dùng

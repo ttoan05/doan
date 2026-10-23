@@ -261,6 +261,10 @@ class ProductDetailActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btnProdAddToCart).setOnClickListener {
+            if (!food.isAvailable) {
+                Toast.makeText(this, "Món ăn này hiện đang tạm hết, vui lòng chọn món khác!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             val etNote = findViewById<EditText>(R.id.etProdNote)
             val userNote = etNote.text.toString().trim()
 
@@ -342,11 +346,28 @@ class ProductDetailActivity : AppCompatActivity() {
     private fun updateQuantityAndPriceDisplay() {
         findViewById<TextView>(R.id.tvProdQty).text = quantity.toString()
 
+        val btnAdd = findViewById<Button>(R.id.btnProdAddToCart)
+        if (!food.isAvailable) {
+            btnAdd.isEnabled = false
+            btnAdd.text = "Món này hiện đang tạm hết"
+            btnAdd.setBackgroundResource(R.drawable.bg_btn_disabled_soft)
+            btnAdd.setTextColor(Color.parseColor("#94A3B8"))
+            findViewById<ImageView>(R.id.ivProdImage).alpha = 0.6f
+            findViewById<TextView>(R.id.btnProdMinus).isEnabled = false
+            findViewById<TextView>(R.id.btnProdPlus).isEnabled = false
+            return
+        }
+
         val basePrice = FormatUtils.parsePrice(food.price)
         val unitPrice = basePrice + sizePriceExtra + selectedToppings.sumOf { it.price }
         val total = unitPrice * quantity
-        findViewById<Button>(R.id.btnProdAddToCart).text =
-            "Thêm vào giỏ • ${FormatUtils.money(total)}"
+        btnAdd.isEnabled = true
+        btnAdd.setBackgroundResource(R.drawable.bg_btn_red)
+        btnAdd.setTextColor(Color.WHITE)
+        btnAdd.text = "Thêm vào giỏ • ${FormatUtils.money(total)}"
+        findViewById<ImageView>(R.id.ivProdImage).alpha = 1.0f
+        findViewById<TextView>(R.id.btnProdMinus).isEnabled = true
+        findViewById<TextView>(R.id.btnProdPlus).isEnabled = true
     }
 
     private fun updateHeartIcon() {

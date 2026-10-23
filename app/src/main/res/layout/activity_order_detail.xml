@@ -66,6 +66,15 @@
                         android:textSize="16sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_dark"/>
+                    <ImageView
+                        android:id="@+id/btnCallRestaurant"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="6dp"
+                        android:padding="6dp"
+                        android:background="@drawable/bg_btn_call_green"
+                        android:src="@drawable/ic_phone_call"
+                        android:contentDescription="Gọi cho Quán ăn" />
                     <TextView
                         android:id="@+id/tvDetailStatus"
                         android:layout_width="wrap_content"
@@ -321,13 +330,30 @@
                     android:text="Số điện thoại"
                     android:textSize="12sp"
                     android:textColor="@color/text_grey"/>
-                <TextView
-                    android:id="@+id/tvDetailPhone"
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_dark"/>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="8dp">
+                    <TextView
+                        android:id="@+id/tvDetailPhone"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textSize="14sp"
+                        android:textColor="#2563EB"
+                        android:textStyle="bold"/>
+                    <ImageView
+                        android:id="@+id/btnCallPhone"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="6dp"
+                        android:padding="6dp"
+                        android:background="@drawable/bg_btn_call_green"
+                        android:src="@drawable/ic_phone_call"
+                        android:contentDescription="Gọi số điện thoại" />
+                </LinearLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -355,6 +381,22 @@
                     android:layout_height="wrap_content"
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"/>
+
+                <TextView
+                    android:id="@+id/btnDetailViewQr"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:background="@drawable/bg_tag_bank"
+                    android:paddingStart="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="4dp"
+                    android:text="Xem lại mã QR thanh toán"
+                    android:textColor="#1E40AF"
+                    android:textSize="11.5sp"
+                    android:textStyle="bold"
+                    android:visibility="gone" />
 
                 <LinearLayout
                     android:id="@+id/llDetailOrderNote"

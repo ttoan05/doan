@@ -9,5 +9,6 @@ data class User(
     val gender: String = "",
     val birthday: String = "",
     val job: String = "",
-    val role: String = "user" // "user" hoặc "admin"
+    val role: String = "user", // "user" hoặc "admin"
+    val avatarUri: String = "" // Đường dẫn ảnh đại diện cá nhân (file URI hoặc file path)
 )

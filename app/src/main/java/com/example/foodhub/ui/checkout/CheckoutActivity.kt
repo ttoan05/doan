@@ -471,37 +471,50 @@ class CheckoutActivity : AppCompatActivity() {
 
         btnQrDialogClose.setOnClickListener { dialog.dismiss() }
 
-        // Tải ảnh mã QR động từ VietQR API
+        // Hiển thị ngay lập tức mã QR chuẩn nét offline (0ms latency, không sợ rớt mạng)
+        try {
+            val localQrBitmap = com.example.foodhub.utils.QrCodeGenerator.createPaymentQrBitmap(
+                isMomo = isMomo,
+                bankCode = bankCode,
+                accountNumber = accountNumber,
+                accountName = accountName,
+                amount = finalTotal,
+                transferNote = transferSyntax
+            )
+            ivQrCode.setImageBitmap(localQrBitmap)
+            ivQrCode.visibility = View.VISIBLE
+            pbQrLoading.visibility = View.GONE
+            tvQrError.visibility = View.GONE
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+
+        // Tải ảnh mã QR động từ VietQR API nếu có mạng
         Thread {
             try {
-                val encodedSyntax = URLEncoder.encode(transferSyntax, "UTF-8")
-                val encodedName = URLEncoder.encode(accountName, "UTF-8")
-                val qrUrl = "https://img.vietqr.io/image/$bankCode-$accountNumber-compact2.png?amount=$finalTotal&addInfo=$encodedSyntax&accountName=$encodedName"
+                val cleanSyntax = transferSyntax.replace("[^a-zA-Z0-9 ]".toRegex(), "").trim()
+                val encodedSyntax = URLEncoder.encode(cleanSyntax, "UTF-8").replace("+", "%20")
+                val encodedName = URLEncoder.encode(accountName, "UTF-8").replace("+", "%20")
+                val qrUrl = "https://img.vietqr.io/image/970422-$accountNumber-compact2.png?amount=$finalTotal&addInfo=$encodedSyntax&accountName=$encodedName"
 
                 val url = URL(qrUrl)
                 val conn = url.openConnection() as HttpURLConnection
-                conn.connectTimeout = 10000
-                conn.readTimeout = 10000
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
                 conn.setRequestProperty("User-Agent", "Mozilla/5.0")
                 conn.doInput = true
                 conn.connect()
                 val bitmap = BitmapFactory.decodeStream(conn.inputStream)
-                runOnUiThread {
-                    if (bitmap != null) {
+                if (bitmap != null) {
+                    runOnUiThread {
                         ivQrCode.setImageBitmap(bitmap)
                         pbQrLoading.visibility = View.GONE
                         ivQrCode.visibility = View.VISIBLE
-                    } else {
-                        pbQrLoading.visibility = View.GONE
-                        tvQrError.visibility = View.VISIBLE
+                        tvQrError.visibility = View.GONE
                     }
                 }
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                runOnUiThread {
-                    pbQrLoading.visibility = View.GONE
-                    tvQrError.visibility = View.VISIBLE
-                }
+            } catch (ignored: Throwable) {
+                // Giữ nguyên ảnh QR offline đã hiển thị từ trước
             }
         }.start()
 

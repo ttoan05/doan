@@ -96,7 +96,7 @@
                     android:layout_height="72dp"
                     android:alpha="0.8"
                     android:contentDescription="Trống"
-                    android:src="@drawable/ic_house" />
+                     />
 
                 <TextView
                     android:layout_width="wrap_content"

@@ -49,7 +49,6 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
 
         // Nạp cơ sở dữ liệu danh mục & món ăn
         try {
@@ -57,6 +56,36 @@ class LoginActivity : AppCompatActivity() {
         } catch (e: Throwable) {
             e.printStackTrace()
         }
+
+        // Tự động đăng nhập nếu trước đó đã tích "Ghi nhớ tôi"
+        val sharedPref = getSharedPreferences("foodhub_auth_prefs", Context.MODE_PRIVATE)
+        val isRemembered = sharedPref.getBoolean("remember_me", false)
+        val savedUserId = sharedPref.getLong("saved_user_id", -1L)
+        val savedEmail = sharedPref.getString("saved_email", "")
+
+        if (isRemembered) {
+            val dbHelper = DatabaseHelper.getInstance(this)
+            val autoUser = if (savedUserId > 0) {
+                dbHelper.getUserById(savedUserId)
+            } else if (!savedEmail.isNullOrBlank()) {
+                dbHelper.getUserByEmail(savedEmail)
+            } else {
+                null
+            }
+
+            if (autoUser != null) {
+                UserProfileManager.setUser(autoUser)
+                CartManager.init(this, autoUser.id)
+                OrderManager.init(this, autoUser.id)
+                NotificationStore.init(this, autoUser.id)
+
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+                return
+            }
+        }
+
+        setContentView(R.layout.activity_login)
 
         etEmail         = findViewById(R.id.etEmail)
         etPassword      = findViewById(R.id.etPassword)
@@ -80,7 +109,7 @@ class LoginActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvForgot).setOnClickListener {
             Toast.makeText(
                 this,
-                "👑 Tài khoản Admin: admin@foodhub.com / MK: 123456\n👤 Tài khoản Người dùng: truong@email.com / MK: 123456\nHoặc bạn hãy bấm 'Đăng kí ngay' để tạo tài khoản mới.",
+                " Tài khoản Admin: admin@foodhub.com / MK: 123456\n Tài khoản Người dùng: truong@email.com / MK: 123456\nHoặc bạn hãy bấm 'Đăng kí ngay' để tạo tài khoản mới.",
                 Toast.LENGTH_LONG
             ).show()
         }
@@ -170,9 +199,11 @@ class LoginActivity : AppCompatActivity() {
             with(sharedPref.edit()) {
                 if (cbRemember.isChecked) {
                     putBoolean("remember_me", true)
+                    putLong("saved_user_id", user.id)
                     putString("saved_email", email)
                 } else {
                     putBoolean("remember_me", false)
+                    remove("saved_user_id")
                     remove("saved_email")
                 }
                 apply()

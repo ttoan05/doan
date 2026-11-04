@@ -48,4 +48,38 @@ object FormatUtils {
         return now.get(Calendar.YEAR) == other.get(Calendar.YEAR) &&
                 now.get(Calendar.DAY_OF_YEAR) == other.get(Calendar.DAY_OF_YEAR)
     }
+
+    /**
+     * Chuyển đổi chuỗi tiếng Việt có dấu thành không dấu, viết thường và chuẩn hóa để tìm kiếm linh hoạt.
+     * Ví dụ: "Cơm sườn" -> "com suon", "Phở Bò" -> "pho bo", "Trà sữa" -> "tra sua"
+     */
+    fun removeDiacritics(str: String?): String {
+        if (str.isNullOrBlank()) return ""
+        val normalized = java.text.Normalizer.normalize(str.trim().lowercase(), java.text.Normalizer.Form.NFD)
+        return normalized.replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+            .replace('đ', 'd')
+            .replace('Đ', 'd')
+    }
+
+    /**
+     * Kiểm tra xem chuỗi văn bản [target] có chứa hoặc khớp với từ khóa tìm kiếm [query] hay không.
+     * Hỗ trợ tìm kiếm ngay từ 1-2 chữ cái đầu (VD: gõ "c" hay "co" đều khớp với "Cơm").
+     * Hỗ trợ tìm cả khi gõ có dấu ("cơm") lẫn gõ không dấu ("com").
+     */
+    fun matchesSearch(target: String?, query: String?): Boolean {
+        if (query.isNullOrBlank()) return true
+        if (target.isNullOrBlank()) return false
+
+        val cleanQuery = query.trim().lowercase()
+        val cleanTarget = target.trim().lowercase()
+
+        // 1. So khớp trực tiếp (có dấu)
+        if (cleanTarget.contains(cleanQuery)) return true
+
+        // 2. So khớp không dấu linh hoạt (ví dụ: gõ "c", "co", "com" đều khớp "Cơm")
+        val noToneTarget = removeDiacritics(cleanTarget)
+        val noToneQuery = removeDiacritics(cleanQuery)
+
+        return noToneTarget.contains(noToneQuery)
+    }
 }

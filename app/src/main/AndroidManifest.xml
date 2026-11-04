@@ -30,6 +30,8 @@
         <activity android:name=".ui.restaurant.RestaurantDetailActivity"/>
         <activity android:name=".ui.product.ProductDetailActivity"/>
         <activity android:name=".ui.order.OrderDetailActivity"/>
+        <activity android:name=".ui.order.OrderChatActivity"
+            android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.cart.CartActivity"/>
         <activity android:name=".ui.checkout.CheckoutActivity"
             android:windowSoftInputMode="adjustResize"/>

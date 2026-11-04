@@ -60,7 +60,6 @@ class VoucherActivity : AppCompatActivity() {
             }
 
             val tvIcon = TextView(this).apply {
-                text = "🎟️"
                 textSize = 50f
                 gravity = Gravity.CENTER
             }

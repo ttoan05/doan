@@ -194,7 +194,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="📝 Ghi chú đơn hàng"
+                    android:text=" Ghi chú đơn hàng"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_dark"
@@ -234,7 +234,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="🎟️ Mã giảm giá (Voucher)"
+                        android:text=" Mã giảm giá (Voucher)"
                         android:textSize="15sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_dark"/>

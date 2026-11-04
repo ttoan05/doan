@@ -11,7 +11,6 @@ object PaymentStore {
     const val METHOD_COD = "COD"
     const val METHOD_MOMO = "MOMO"
     const val METHOD_BANK = "BANK"
-    const val METHOD_CARD = "CARD"
 
     private const val PREFS_NAME = "foodhub_payment_prefs"
     private const val KEY_PREFIX = "default_payment_method_"
@@ -19,12 +18,15 @@ object PaymentStore {
     fun getDefaultMethod(context: Context): String {
         val uid = UserProfileManager.currentUserId
         val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString("$KEY_PREFIX$uid", METHOD_COD) ?: METHOD_COD
+        val method = prefs.getString("$KEY_PREFIX$uid", METHOD_COD) ?: METHOD_COD
+        // Tự động chuyển về COD nếu trước đó đã từng chọn CARD
+        return if (method == "CARD") METHOD_COD else method
     }
 
     fun setDefaultMethod(context: Context, methodCode: String) {
         val uid = UserProfileManager.currentUserId
         val prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString("$KEY_PREFIX$uid", methodCode).apply()
+        val safeMethod = if (methodCode == "CARD") METHOD_COD else methodCode
+        prefs.edit().putString("$KEY_PREFIX$uid", safeMethod).apply()
     }
 }

@@ -34,8 +34,11 @@
             android:layout_marginBottom="32dp"/>
 
         <!-- Email -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            style="@style/LabelText" android:text="Email"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/LabelText"
+            android:text="Email"/>
         <EditText
             android:id="@+id/etEmail"
             android:layout_width="match_parent"
@@ -58,8 +61,11 @@
             android:layout_marginBottom="12dp"/>
 
         <!-- Password -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            style="@style/LabelText" android:text="Mật khẩu"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/LabelText"
+            android:text="Mật khẩu"/>
         <EditText
             android:id="@+id/etPassword"
             android:layout_width="match_parent"
@@ -96,7 +102,10 @@
                 android:textSize="14sp"
                 android:textColor="@color/text_grey2"
                 android:buttonTint="@color/blue_primary"/>
-            <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"/>
             <TextView
                 android:id="@+id/tvForgot"
                 android:layout_width="wrap_content"

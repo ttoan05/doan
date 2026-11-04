@@ -1,6 +1,5 @@
 package com.example.foodhub.ui.address
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodhub.R
 import com.example.foodhub.data.AddressStore
@@ -35,11 +35,7 @@ class AddressActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.btnAddTop).setOnClickListener {
-            showAddAddressDialog()
-        }
-
-        findViewById<View>(R.id.btnEmptyAdd).setOnClickListener {
-            showAddAddressDialog()
+            showEditAddressDialog(null)
         }
 
         renderAddressList()
@@ -79,7 +75,7 @@ class AddressActivity : AppCompatActivity() {
 
             ivIcon.setImageResource(R.drawable.ic_house)
 
-            // Delete action
+            // Xóa địa chỉ khi bấm icon thùng rác
             btnDelete.setOnClickListener {
                 AlertDialog.Builder(this)
                     .setTitle("Xác nhận xóa")
@@ -93,25 +89,26 @@ class AddressActivity : AppCompatActivity() {
                     .show()
             }
 
-            // Click card to set as default or view
+            // Bấm vào cả ô địa chỉ để mở hộp thoại chỉnh sửa / cập nhật
             itemView.setOnClickListener {
-                if (!addr.isDefault) {
-                    AddressStore.setDefault(this, addr.id)
-                    Toast.makeText(this, "Đã chọn làm địa chỉ mặc định: ${addr.label}", Toast.LENGTH_SHORT).show()
-                    renderAddressList()
-                } else {
-                    Toast.makeText(this, "Địa chỉ: ${addr.shortLine}", Toast.LENGTH_SHORT).show()
-                }
+                showEditAddressDialog(addr)
             }
 
             llAddressContainer.addView(itemView)
         }
     }
 
-    private fun showAddAddressDialog() {
+    /**
+     * Mở hộp thoại:
+     * - Nếu `addressToEdit == null`: Thêm địa chỉ mới
+     * - Nếu `addressToEdit != null`: Sửa/Cập nhật lại địa chỉ đã chọn
+     */
+    private fun showEditAddressDialog(addressToEdit: SavedAddress?) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_address, null)
+        val tvDialogTitle = dialogView.findViewById<TextView>(R.id.tvAddressDialogTitle)
         val rbHome = dialogView.findViewById<RadioButton>(R.id.rbHome)
         val rbWork = dialogView.findViewById<RadioButton>(R.id.rbWork)
+        val rbOther = dialogView.findViewById<RadioButton>(R.id.rbOther)
         val etAddress = dialogView.findViewById<EditText>(R.id.etAddress)
         val etReceiver = dialogView.findViewById<EditText>(R.id.etReceiver)
         val etPhone = dialogView.findViewById<EditText>(R.id.etPhone)
@@ -119,12 +116,33 @@ class AddressActivity : AppCompatActivity() {
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
 
-        // Pre-fill user information if available
-        if (UserProfileManager.name.isNotEmpty()) {
-            etReceiver.setText(UserProfileManager.name)
-        }
-        if (UserProfileManager.phone.isNotEmpty()) {
-            etPhone.setText(UserProfileManager.phone)
+        val isEditMode = addressToEdit != null
+
+        if (isEditMode) {
+            tvDialogTitle?.text = "Chỉnh sửa địa chỉ"
+            btnSave.text = "LƯU THAY ĐỔI"
+
+            etAddress.setText(addressToEdit!!.address)
+            etReceiver.setText(addressToEdit.receiver)
+            etPhone.setText(addressToEdit.phone)
+            cbIsDefault.isChecked = addressToEdit.isDefault
+
+            when (addressToEdit.label.lowercase()) {
+                "nhà", "nha" -> rbHome.isChecked = true
+                "công ty", "cong ty" -> rbWork.isChecked = true
+                else -> rbOther.isChecked = true
+            }
+        } else {
+            tvDialogTitle?.text = "Thêm địa chỉ nhận hàng"
+            btnSave.text = "LƯU ĐỊA CHỈ"
+
+            // Điền sẵn thông tin người dùng nếu có
+            if (UserProfileManager.name.isNotEmpty()) {
+                etReceiver.setText(UserProfileManager.name)
+            }
+            if (UserProfileManager.phone.isNotEmpty()) {
+                etPhone.setText(UserProfileManager.phone)
+            }
         }
 
         val dialog = AlertDialog.Builder(this)
@@ -164,17 +182,32 @@ class AddressActivity : AppCompatActivity() {
                 else -> "Khác"
             }
 
-            val saved = SavedAddress(
-                id = 0L,
-                label = label,
-                receiver = receiver,
-                phone = phone,
-                address = addrText,
-                isDefault = cbIsDefault.isChecked
-            )
+            if (isEditMode) {
+                val updated = addressToEdit!!.copy(
+                    label = label,
+                    receiver = receiver,
+                    phone = phone,
+                    address = addrText,
+                    isDefault = cbIsDefault.isChecked
+                )
+                AddressStore.update(this, updated)
+                if (cbIsDefault.isChecked) {
+                    AddressStore.setDefault(this, updated.id)
+                }
+                Toast.makeText(this, "Đã cập nhật địa chỉ thành công!", Toast.LENGTH_SHORT).show()
+            } else {
+                val newAddress = SavedAddress(
+                    id = 0L,
+                    label = label,
+                    receiver = receiver,
+                    phone = phone,
+                    address = addrText,
+                    isDefault = cbIsDefault.isChecked
+                )
+                AddressStore.insert(this, newAddress)
+                Toast.makeText(this, "Đã thêm địa chỉ thành công!", Toast.LENGTH_SHORT).show()
+            }
 
-            AddressStore.insert(this, saved)
-            Toast.makeText(this, "Đã thêm địa chỉ thành công!", Toast.LENGTH_SHORT).show()
             dialog.dismiss()
             renderAddressList()
         }

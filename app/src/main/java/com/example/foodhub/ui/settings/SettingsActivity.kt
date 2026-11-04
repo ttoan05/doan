@@ -206,7 +206,7 @@ class SettingsActivity : AppCompatActivity() {
         val actionText = if (isEnabled) "Tắt xác thực" else "Kích hoạt ngay"
 
         AlertDialog.Builder(this)
-            .setTitle("🛡️ Xác thực 2 lớp (2FA)")
+            .setTitle(" Xác thực 2 lớp (2FA)")
             .setMessage(
                 "Xác thực 2 lớp giúp bảo vệ tài khoản bằng mã OTP gửi về số điện thoại khi đăng nhập từ thiết bị lạ.\n\n" +
                 "Trạng thái hiện tại: " + (if (isEnabled) "Đang BẬT ✅" else "Đang TẮT ❌")
@@ -226,7 +226,7 @@ class SettingsActivity : AppCompatActivity() {
         val current = if (tvCurrentLanguage.text.toString().contains("English")) 1 else 0
 
         AlertDialog.Builder(this)
-            .setTitle("🌐 Chọn ngôn ngữ")
+            .setTitle("Chọn ngôn ngữ")
             .setSingleChoiceItems(languages, current) { dialog, which ->
                 val selectedLang = if (which == 0) "Tiếng Việt" else "English"
                 tvCurrentLanguage.text = selectedLang
@@ -242,7 +242,7 @@ class SettingsActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("⭐ Đánh giá FoodHub")
             .setMessage("Bạn cảm thấy trải nghiệm đặt món cùng FoodHub như thế nào? Hãy dành chút thời gian đánh giá 5 sao nhé!")
-            .setPositiveButton("Đánh giá 5 sao ⭐") { _, _ ->
+            .setPositiveButton("Đánh giá 5 sao ") { _, _ ->
                 Toast.makeText(this, "Cảm ơn bạn rất nhiều vì đã ủng hộ 5 sao! ❤️", Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Để sau", null)
@@ -251,7 +251,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun showTermsDialog() {
         AlertDialog.Builder(this)
-            .setTitle("📋 Điều khoản & Chính sách")
+            .setTitle(" Điều khoản & Chính sách")
             .setMessage(
                 "1. Cam kết an toàn thực phẩm và quyền lợi người dùng.\n\n" +
                 "2. Bảo mật thông tin cá nhân và phương thức thanh toán tuyệt đối.\n\n" +

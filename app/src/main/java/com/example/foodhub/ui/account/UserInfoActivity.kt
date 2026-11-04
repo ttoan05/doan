@@ -1,16 +1,25 @@
 package com.example.foodhub.ui.account
 
 import android.app.DatePickerDialog
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.UserProfileManager
 import com.example.foodhub.data.model.User
+import com.example.foodhub.ui.order.OrderDetailDialogHelper
+import com.example.foodhub.utils.ImageUtils
+import java.io.File
 import java.util.Calendar
 
 class UserInfoActivity : AppCompatActivity() {
@@ -21,6 +30,21 @@ class UserInfoActivity : AppCompatActivity() {
     private lateinit var etGender: EditText
     private lateinit var etBirthday: EditText
     private lateinit var etJob: EditText
+
+    private lateinit var tvAvatarLetterInfo: TextView
+    private lateinit var ivAvatarPhotoInfo: ImageView
+
+    // Bộ chọn ảnh từ thư viện thiết bị
+    private val pickAvatarLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        if (uri != null) {
+            val savedPath = OrderDetailDialogHelper.saveImageToInternalStorage(this, uri)
+            if (savedPath != null) {
+                applyNewAvatar(savedPath)
+            } else {
+                Toast.makeText(this, "Không thể lưu ảnh đã chọn", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,11 +60,24 @@ class UserInfoActivity : AppCompatActivity() {
         etBirthday = findViewById(R.id.etBirthday)
         etJob = findViewById(R.id.etJob)
 
+        tvAvatarLetterInfo = findViewById(R.id.tvAvatarLetterInfo)
+        ivAvatarPhotoInfo = findViewById(R.id.ivAvatarPhotoInfo)
+
+        // Bấm vào khu vực Avatar hoặc chữ "Đổi hình đại diện" để chọn ảnh
+        val onAvatarClick = View.OnClickListener { showAvatarOptionsDialog() }
+        findViewById<View>(R.id.llAvatarSection).setOnClickListener(onAvatarClick)
+        findViewById<View>(R.id.tvChangeAvatar).setOnClickListener(onAvatarClick)
+
         // Tên đăng nhập không cho sửa
         findViewById<EditText>(R.id.etUsername).setText(UserProfileManager.username)
 
         // Nạp dữ liệu hiện tại từ UserProfileManager vào các ô nhập
         loadCurrentProfile()
+
+        // Bấm vào ô "Giới tính" mở hộp thoại chọn Nam / Nữ / Khác thay vì tự gõ
+        val onGenderClick = View.OnClickListener { showGenderDialog() }
+        etGender.setOnClickListener(onGenderClick)
+        findViewById<View>(R.id.llGender)?.setOnClickListener(onGenderClick)
 
         // Bấm vào ô "Ngày sinh" mở lịch chọn ngày cho tiện, thay vì gõ tay
         etBirthday.setOnClickListener { showDatePicker() }
@@ -52,12 +89,11 @@ class UserInfoActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Phòng khi thông tin bị thay đổi ở nơi khác trong lúc màn hình này đang mở
         loadCurrentProfile()
     }
 
     private fun loadCurrentProfile() {
-        findViewById<TextView>(R.id.tvAvatarLetterInfo).text = UserProfileManager.avatarLetter
+        renderAvatar(UserProfileManager.avatarUri, UserProfileManager.avatarLetter)
         findViewById<TextView>(R.id.tvAvatarNameInfo).text = UserProfileManager.name
 
         etName.setText(UserProfileManager.name)
@@ -66,6 +102,99 @@ class UserInfoActivity : AppCompatActivity() {
         etGender.setText(UserProfileManager.gender)
         etBirthday.setText(UserProfileManager.birthday)
         etJob.setText(UserProfileManager.job)
+    }
+
+    private fun renderAvatar(avatarUri: String, letter: String) {
+        if (avatarUri.isNotEmpty()) {
+            val file = File(avatarUri)
+            if (file.exists()) {
+                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
+                if (bitmap != null) {
+                    val circularBitmap = ImageUtils.getCircularBitmap(bitmap)
+                    ivAvatarPhotoInfo.setImageBitmap(circularBitmap)
+                    ivAvatarPhotoInfo.visibility = View.VISIBLE
+                    tvAvatarLetterInfo.visibility = View.GONE
+                    return
+                }
+            }
+        }
+        // Mặc định hiển thị chữ cái
+        tvAvatarLetterInfo.text = letter
+        tvAvatarLetterInfo.visibility = View.VISIBLE
+        ivAvatarPhotoInfo.visibility = View.GONE
+    }
+
+    private fun showAvatarOptionsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_avatar_options, null)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .create()
+
+        dialog.window?.apply {
+            setBackgroundDrawableResource(android.R.color.transparent)
+            setGravity(android.view.Gravity.BOTTOM)
+            setLayout(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        dialogView.findViewById<View>(R.id.btnOptionPickGallery).setOnClickListener {
+            dialog.dismiss()
+            pickAvatarLauncher.launch("image/*")
+        }
+
+        dialogView.findViewById<View>(R.id.btnOptionRemoveAvatar).setOnClickListener {
+            dialog.dismiss()
+            removeAvatar()
+        }
+
+        dialogView.findViewById<View>(R.id.btnCancelAvatarDialog).setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun applyNewAvatar(savedPath: String) {
+        UserProfileManager.updateAvatar(savedPath)
+
+        val currentUserId = UserProfileManager.currentUserId
+        if (currentUserId > 0) {
+            DatabaseHelper.getInstance(this).updateUserAvatar(currentUserId, savedPath)
+        }
+
+        renderAvatar(savedPath, UserProfileManager.avatarLetter)
+        Toast.makeText(this, "Đã cập nhật ảnh đại diện thành công!", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun removeAvatar() {
+        UserProfileManager.updateAvatar("")
+
+        val currentUserId = UserProfileManager.currentUserId
+        if (currentUserId > 0) {
+            DatabaseHelper.getInstance(this).updateUserAvatar(currentUserId, "")
+        }
+
+        renderAvatar("", UserProfileManager.avatarLetter)
+        Toast.makeText(this, "Đã gỡ ảnh đại diện", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showGenderDialog() {
+        val genders = arrayOf("Nam", "Nữ", "Khác")
+        val currentGender = etGender.text.toString().trim()
+        val checkedItem = genders.indexOfFirst { it.equals(currentGender, ignoreCase = true) }
+
+        AlertDialog.Builder(this)
+            .setTitle("Chọn giới tính")
+            .setSingleChoiceItems(genders, checkedItem) { dialog, which ->
+                etGender.setText(genders[which])
+                dialog.dismiss()
+            }
+            .setNegativeButton("Hủy") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun showDatePicker() {
@@ -137,13 +266,14 @@ class UserInfoActivity : AppCompatActivity() {
                 password = "",
                 gender = etGender.text.toString().trim(),
                 birthday = etBirthday.text.toString().trim(),
-                job = etJob.text.toString().trim()
+                job = etJob.text.toString().trim(),
+                avatarUri = UserProfileManager.avatarUri
             )
             DatabaseHelper.getInstance(this).updateUserProfile(updatedUser)
         }
 
         // Cập nhật lại avatar/tên hiển thị ngay trên chính màn hình này
-        findViewById<TextView>(R.id.tvAvatarLetterInfo).text = UserProfileManager.avatarLetter
+        renderAvatar(UserProfileManager.avatarUri, UserProfileManager.avatarLetter)
         findViewById<TextView>(R.id.tvAvatarNameInfo).text = UserProfileManager.name
 
         Toast.makeText(this, "Đã lưu thông tin vào cơ sở dữ liệu", Toast.LENGTH_SHORT).show()

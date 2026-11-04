@@ -32,7 +32,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:text="Ví Voucher 🎟️"
+            android:text="Ví Voucher"
             android:textColor="#111827"
             android:textSize="18sp"
             android:textStyle="bold" />

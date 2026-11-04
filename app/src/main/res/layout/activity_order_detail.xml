@@ -139,6 +139,18 @@
                     android:textSize="14sp"
                     android:textColor="@color/text_dark"/>
 
+                <!-- Ảnh thực tế kèm đánh giá -->
+                <ImageView
+                    android:id="@+id/ivReviewImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="6dp"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/bg_field"
+                    android:clipToOutline="true"
+                    android:visibility="gone"/>
+
                 <Button
                     android:id="@+id/btnWriteReview"
                     android:layout_width="match_parent"
@@ -174,6 +186,100 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"/>
+            </LinearLayout>
+
+            <!-- Thẻ Tài xế giao hàng (Shipper Card) -->
+            <LinearLayout
+                android:id="@+id/llShipperCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🛵 Tài xế giao hàng"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"
+                    android:layout_marginBottom="10dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_cat_normal"
+                        android:gravity="center"
+                        android:text="🛵"
+                        android:textSize="24sp"/>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvShipperDetailName"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Nguyễn Văn Hùng"
+                            android:textSize="14.5sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/text_dark"/>
+
+                        <TextView
+                            android:id="@+id/tvShipperDetailVehicle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:text="Honda Wave • 59-X1 234.56 • 4.9 ⭐"
+                            android:textSize="12sp"
+                            android:textColor="@color/text_grey2"/>
+                    </LinearLayout>
+
+                    <!-- Nút gọi điện cho Shipper -->
+                    <ImageView
+                        android:id="@+id/btnCallShipperDetail"
+                        android:layout_width="34dp"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="8dp"
+                        android:padding="7dp"
+                        android:background="@drawable/bg_btn_call_green"
+                        android:src="@drawable/ic_phone_call"
+                        android:contentDescription="Gọi tài xế" />
+
+                    <!-- Nút nhắn tin cho Shipper -->
+                    <LinearLayout
+                        android:id="@+id/btnChatShipperDetail"
+                        android:layout_width="wrap_content"
+                        android:layout_height="34dp"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_btn_red"
+                        android:gravity="center_vertical"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:clickable="true"
+                        android:focusable="true">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="💬 Nhắn tin"
+                            android:textColor="#FFFFFF"
+                            android:textSize="12.5sp"
+                            android:textStyle="bold"/>
+                    </LinearLayout>
+                </LinearLayout>
             </LinearLayout>
 
             <!-- Món ăn -->

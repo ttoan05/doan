@@ -120,6 +120,14 @@ class AccountActivity : AppCompatActivity() {
             OrderManager.clearMemory()
             NotificationStore.clearMemory()
 
+            // Hủy trạng thái tự động đăng nhập khi người dùng chủ động bấm Đăng xuất
+            val sharedPref = getSharedPreferences("foodhub_auth_prefs", MODE_PRIVATE)
+            with(sharedPref.edit()) {
+                putBoolean("remember_me", false)
+                remove("saved_user_id")
+                apply()
+            }
+
             val intent = Intent(
                 this,
                 LoginActivity::class.java
@@ -196,8 +204,32 @@ class AccountActivity : AppCompatActivity() {
 
     private fun refreshUserHeader() {
         findViewById<TextView>(R.id.tvUserName).text = UserProfileManager.name
-        findViewById<TextView>(R.id.tvAvatarLetter).text = UserProfileManager.avatarLetter
 
+        val tvAvatarLetter = findViewById<TextView>(R.id.tvAvatarLetter)
+        val ivAvatarPhoto = findViewById<ImageView>(R.id.ivAvatarPhoto)
+
+        val avatarUri = UserProfileManager.avatarUri
+        if (avatarUri.isNotEmpty()) {
+            val file = java.io.File(avatarUri)
+            if (file.exists()) {
+                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
+                if (bitmap != null) {
+                    val circular = com.example.foodhub.utils.ImageUtils.getCircularBitmap(bitmap)
+                    ivAvatarPhoto.setImageBitmap(circular)
+                    ivAvatarPhoto.visibility = View.VISIBLE
+                    tvAvatarLetter.visibility = View.GONE
+                    renderRoleBadge()
+                    return
+                }
+            }
+        }
+        tvAvatarLetter.text = UserProfileManager.avatarLetter
+        tvAvatarLetter.visibility = View.VISIBLE
+        ivAvatarPhoto.visibility = View.GONE
+        renderRoleBadge()
+    }
+
+    private fun renderRoleBadge() {
         val isAdmin = UserProfileManager.isAdmin
         findViewById<TextView>(R.id.tvUserRoleBadge).visibility = if (isAdmin) View.VISIBLE else View.GONE
         findViewById<View>(R.id.llAdminSection).visibility = if (isAdmin) View.VISIBLE else View.GONE
@@ -250,17 +282,14 @@ class AccountActivity : AppCompatActivity() {
         val cardCod = view.findViewById<View>(R.id.cardCod)
         val cardMomo = view.findViewById<View>(R.id.cardMomo)
         val cardBank = view.findViewById<View>(R.id.cardBank)
-        val cardCard = view.findViewById<View>(R.id.cardCard)
 
         val radioCod = view.findViewById<ImageView>(R.id.radioCod)
         val radioMomo = view.findViewById<ImageView>(R.id.radioMomo)
         val radioBank = view.findViewById<ImageView>(R.id.radioBank)
-        val radioCard = view.findViewById<ImageView>(R.id.radioCard)
 
         val tagCod = view.findViewById<TextView>(R.id.tagCod)
         val tagMomo = view.findViewById<TextView>(R.id.tagMomo)
         val tagBank = view.findViewById<TextView>(R.id.tagBank)
-        val tagCard = view.findViewById<TextView>(R.id.tagCard)
 
         fun updateUi() {
             // COD
@@ -286,14 +315,6 @@ class AccountActivity : AppCompatActivity() {
             tagBank.text = if (isBank) "Mặc định" else "24/7 Miễn phí"
             tagBank.setBackgroundResource(if (isBank) R.drawable.bg_tag_default else R.drawable.bg_tag_bank)
             tagBank.setTextColor(if (isBank) Color.parseColor("#03543F") else Color.parseColor("#1E40AF"))
-
-            // CARD
-            val isCard = (selected == PaymentStore.METHOD_CARD)
-            cardCard.setBackgroundResource(if (isCard) R.drawable.bg_payment_card_selected else R.drawable.bg_payment_card_normal)
-            radioCard.setImageResource(if (isCard) R.drawable.ic_radio_checked else R.drawable.ic_radio_unchecked)
-            tagCard.text = if (isCard) "Mặc định" else "Bảo mật"
-            tagCard.setBackgroundResource(if (isCard) R.drawable.bg_tag_default else R.drawable.bg_tag_card)
-            tagCard.setTextColor(if (isCard) Color.parseColor("#03543F") else Color.parseColor("#6D28D9"))
         }
 
         updateUi()
@@ -310,10 +331,6 @@ class AccountActivity : AppCompatActivity() {
             selected = PaymentStore.METHOD_BANK
             updateUi()
         }
-        cardCard.setOnClickListener {
-            selected = PaymentStore.METHOD_CARD
-            updateUi()
-        }
 
         view.findViewById<View>(R.id.btnClosePayment).setOnClickListener {
             bottomSheet.dismiss()
@@ -324,7 +341,6 @@ class AccountActivity : AppCompatActivity() {
             val name = when (selected) {
                 PaymentStore.METHOD_MOMO -> "Ví điện tử MoMo"
                 PaymentStore.METHOD_BANK -> "Chuyển khoản VietQR"
-                PaymentStore.METHOD_CARD -> "Thẻ ATM / Visa / Master"
                 else -> "Tiền mặt (COD)"
             }
             Toast.makeText(this, "Đã lưu $name làm phương thức thanh toán mặc định", Toast.LENGTH_SHORT).show()
@@ -370,7 +386,7 @@ class AccountActivity : AppCompatActivity() {
         addFaq("4. Hotline hỗ trợ:", "Tổng đài: 1900 1234 (8:00 - 22:00 hàng ngày)\nEmail CSKH: hotro@foodhub.vn")
 
         AlertDialog.Builder(this)
-            .setTitle("❓ Trung tâm trợ giúp & FAQ")
+            .setTitle(" Trung tâm trợ giúp & FAQ")
             .setView(scrollView)
             .setPositiveButton("Đóng", null)
             .show()

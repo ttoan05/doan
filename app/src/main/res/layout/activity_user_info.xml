@@ -46,23 +46,42 @@
 
             <!-- Avatar card -->
             <LinearLayout
+                android:id="@+id/llAvatarSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:background="@drawable/bg_card"
                 android:padding="18dp"
                 android:gravity="center_vertical"
+                android:clickable="true"
+                android:focusable="true"
                 android:layout_marginBottom="10dp">
-                <TextView
-                    android:id="@+id/tvAvatarLetterInfo"
+
+                <FrameLayout
                     android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:text="T"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/white"
-                    android:gravity="center"
-                    android:background="@drawable/bg_avatar"/>
+                    android:layout_height="56dp">
+
+                    <TextView
+                        android:id="@+id/tvAvatarLetterInfo"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:text="T"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/white"
+                        android:gravity="center"
+                        android:background="@drawable/bg_avatar"/>
+
+                    <ImageView
+                        android:id="@+id/ivAvatarPhotoInfo"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:scaleType="centerCrop"
+                        android:background="@drawable/bg_avatar"
+                        android:clipToOutline="true"
+                        android:visibility="gone"/>
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/tvAvatarNameInfo"
                     android:layout_width="0dp"
@@ -73,7 +92,9 @@
                     android:textStyle="bold"
                     android:textColor="@color/text_dark"
                     android:layout_marginStart="14dp"/>
+
                 <TextView
+                    android:id="@+id/tvChangeAvatar"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Đổi hình đại diện"
@@ -199,12 +220,15 @@
 
             <!-- Giới tính -->
             <LinearLayout
+                android:id="@+id/llGender"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:background="@drawable/bg_card"
                 android:padding="14dp"
-                android:layout_marginBottom="10dp">
+                android:layout_marginBottom="10dp"
+                android:clickable="true"
+                android:focusable="true">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -218,6 +242,9 @@
                     android:layout_height="wrap_content"
                     android:hint="Cập nhật ngay"
                     android:maxLines="1"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:cursorVisible="false"
                     android:textSize="15sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_dark"

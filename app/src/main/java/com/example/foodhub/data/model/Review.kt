@@ -8,5 +8,6 @@ data class Review(
     /** Số sao 1..5. */
     val stars: Int,
     val comment: String = "",
+    val imageUri: String? = null,
     val createdAt: Long = System.currentTimeMillis()
 )

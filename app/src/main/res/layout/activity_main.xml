@@ -70,7 +70,7 @@
                 android:layout_marginTop="3dp"
                 android:text="Home"
                 android:textSize="10.5sp"
-                android:textColor="#EE4D2D"
+                android:textColor="@color/red_primary"
                 android:textStyle="bold"/>
         </LinearLayout>
 

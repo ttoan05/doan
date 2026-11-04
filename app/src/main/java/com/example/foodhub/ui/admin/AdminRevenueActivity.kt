@@ -4,15 +4,12 @@ import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.provider.MediaStore
 import android.view.Gravity
 import android.view.View
-import android.widget.*
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.FileProvider
 import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.UserProfileManager
@@ -20,7 +17,6 @@ import com.example.foodhub.data.model.Order
 import com.example.foodhub.data.model.OrderStatus
 import com.example.foodhub.ui.order.OrderDetailActivity
 import com.example.foodhub.utils.FormatUtils
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -61,7 +57,9 @@ class AdminRevenueActivity : AppCompatActivity() {
         btnResetDay = findViewById(R.id.btnResetDay)
 
         findViewById<View>(R.id.btnBack).setOnClickListener { finish() }
-        findViewById<View>(R.id.btnExport).setOnClickListener { exportCsv() }
+        findViewById<View>(R.id.btnExport).setOnClickListener {
+            AdminRevenueExportHelper.exportCsv(this, filtered(), range.text.toString())
+        }
         btnResetDay.setOnClickListener {
             selectedDayKey = null
             chart.selectedKey = null
@@ -69,6 +67,8 @@ class AdminRevenueActivity : AppCompatActivity() {
             renderDayChips(filtered())
             renderTransactions(filtered())
         }
+
+
 
         chart.onDaySelected = { key ->
             selectedDayKey = key
@@ -214,7 +214,6 @@ class AdminRevenueActivity : AppCompatActivity() {
         dayChips.removeAllViews()
         val groups = orders.groupBy { dayKey(it.createdAt) }.toSortedMap()
         if (groups.isEmpty()) return
-        // Limit chips to at most 14 most recent days for usability
         val entries = groups.entries.toList()
         val toShow = if (entries.size > 14) entries.takeLast(14) else entries
         toShow.forEach { (key, list) ->
@@ -267,79 +266,10 @@ class AdminRevenueActivity : AppCompatActivity() {
 
         grouped.forEachIndexed { idx, (name, qty, total) ->
             val sample = orders.flatMap { it.items }.firstOrNull { it.name == name }
-            val card = androidx.cardview.widget.CardView(this).apply {
-                radius = dp(12).toFloat()
-                cardElevation = 0f
-                setCardBackgroundColor(Color.parseColor("#F8FAFC"))
-                useCompatPadding = false
-            }
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(10), dp(10), dp(10), dp(10))
-            }
-            val rank = TextView(this).apply {
-                text = "#${idx + 1}"
-                textSize = 13f
-                setTypeface(null, Typeface.BOLD)
-                setTextColor(Color.parseColor("#0F172A"))
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(dp(28), dp(28))
-                background = gradientRankBg(idx)
-                setPadding(0, 0, 0, 0)
-            }
-            val image = ImageView(this).apply {
-                val lp2 = LinearLayout.LayoutParams(dp(48), dp(48))
-                lp2.setMargins(dp(10), 0, 0, 0)
-                layoutParams = lp2
-                scaleType = ImageView.ScaleType.CENTER_CROP
-                clipToOutline = true
-                background = null
-                if (sample?.imageRes != null && sample.imageRes != 0) setImageResource(sample.imageRes)
-                else setImageResource(R.drawable.img_banh_mi)
-            }
-            val texts = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                val lp3 = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-                lp3.setMargins(dp(12), 0, 0, 0)
-                layoutParams = lp3
-            }
-            val tvName = TextView(this).apply {
-                text = name
-                textSize = 14f
-                setTypeface(null, Typeface.BOLD)
-                setTextColor(Color.parseColor("#0F172A"))
-                maxLines = 1
-                ellipsize = android.text.TextUtils.TruncateAt.END
-            }
-            val tvMeta = TextView(this).apply {
-                text = "Đã bán: $qty phần  •  Doanh thu: ${FormatUtils.money(total)}"
-                textSize = 12.5f
-                setTextColor(Color.parseColor("#475569"))
-                setPadding(0, dp(2), 0, 0)
-            }
-            texts.addView(tvName)
-            texts.addView(tvMeta)
-            row.addView(rank)
-            row.addView(image)
-            row.addView(texts)
-            card.addView(row)
+            val card = AdminRevenueViewHelper.buildTopFoodCard(this, idx, name, qty, total, sample?.imageRes)
             val lpCard = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
             lpCard.setMargins(0, if (idx == 0) 0 else dp(8), 0, 0)
             top.addView(card, lpCard)
-        }
-    }
-
-    private fun gradientRankBg(idx: Int): android.graphics.drawable.GradientDrawable {
-        val c = when (idx) {
-            0 -> Color.parseColor("#F59E0B")
-            1 -> Color.parseColor("#94A3B8")
-            2 -> Color.parseColor("#EA580C")
-            else -> Color.parseColor("#CBD5E1")
-        }
-        return android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.OVAL
-            setColor(c)
         }
     }
 
@@ -349,7 +279,6 @@ class AdminRevenueActivity : AppCompatActivity() {
         val displayList = if (selectedDayKey != null) {
             orders.filter { dayKey(it.createdAt) == selectedDayKey }
         } else {
-            // Khi chưa chọn ngày và danh sách dài, chỉ gợi ý chọn ngày thay vì đổ hết gây dài
             if (orders.size > 12 && currentFilterLabel == "Tất cả") {
                 emptyList()
             } else if (orders.size > 20) {
@@ -362,7 +291,6 @@ class AdminRevenueActivity : AppCompatActivity() {
 
         if (selectedDayKey == null && orders.size > 12 && currentFilterLabel == "Tất cả") {
             tvHint.text = "Đang hiển thị ${orders.size} giao dịch. Chọn một ngày ở biểu đồ hoặc chip bên trên để xem chi tiết từng ngày."
-            // show a compact preview count instead of full flood
             val preview = TextView(this).apply {
                 text = "Gợi ý: bấm vào cột biểu đồ hoặc chip ngày để lọc. Bấm \"Tất cả ngày\" sẽ hiện toàn bộ."
                 textSize = 12.5f
@@ -371,7 +299,6 @@ class AdminRevenueActivity : AppCompatActivity() {
                 gravity = Gravity.CENTER
             }
             transactions.addView(preview)
-            // still allow quick view of latest 8 as collapsed preview
             val hint2 = TextView(this).apply {
                 text = "Xem nhanh ${minOf(8, orders.size)} giao dịch gần nhất:"
                 textSize = 12f
@@ -381,7 +308,9 @@ class AdminRevenueActivity : AppCompatActivity() {
             }
             transactions.addView(hint2)
             orders.sortedByDescending { it.createdAt }.take(8).forEach { order ->
-                transactions.addView(buildTransactionCard(order))
+                transactions.addView(AdminRevenueViewHelper.buildTransactionCard(this, order) { clicked ->
+                    startActivity(Intent(this, OrderDetailActivity::class.java).putExtra(OrderDetailActivity.EXTRA_ORDER_ID, clicked.id))
+                })
             }
             val more = TextView(this).apply {
                 text = "Và ${orders.size - 8} giao dịch khác — chọn ngày để xem hết"
@@ -418,165 +347,9 @@ class AdminRevenueActivity : AppCompatActivity() {
 
         val toShow = displayList.sortedByDescending { it.createdAt }
         toShow.forEach { order ->
-            transactions.addView(buildTransactionCard(order))
-        }
-    }
-
-    private fun buildTransactionCard(order: Order): View {
-        val card = androidx.cardview.widget.CardView(this).apply {
-            radius = dp(12).toFloat()
-            cardElevation = 1f
-            setCardBackgroundColor(Color.WHITE)
-        }
-        val col = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(12))
-        }
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-        val tvCode = TextView(this).apply {
-            text = order.code
-            textSize = 13f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(Color.parseColor("#0F172A"))
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-        }
-        val tvStatus = TextView(this).apply {
-            text = order.status.label
-            textSize = 11f
-            setTypeface(null, Typeface.BOLD)
-            setPadding(dp(8), dp(4), dp(8), dp(4))
-            setTextColor(Color.WHITE)
-            background = statusBg(order.status)
-        }
-        header.addView(tvCode)
-        header.addView(tvStatus)
-
-        val tvTime = TextView(this).apply {
-            text = "${FormatUtils.dateTime(order.createdAt)}  •  ${order.restaurant}"
-            textSize = 12f
-            setTextColor(Color.parseColor("#64748B"))
-            setPadding(0, dp(4), 0, 0)
-            maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-        }
-        val tvCustomer = TextView(this).apply {
-            text = "${order.receiverName} • ${order.phone}"
-            textSize = 12.5f
-            setTextColor(Color.parseColor("#1E293B"))
-            setPadding(0, dp(6), 0, 0)
-            maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-        }
-        val tvItems = TextView(this).apply {
-            text = order.items.joinToString(", ") { "${it.name} x${it.quantity}" }
-            textSize = 12.5f
-            setTextColor(Color.parseColor("#334155"))
-            setPadding(0, dp(4), 0, 0)
-        }
-        val footer = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(8), 0, 0)
-        }
-        val tvPay = TextView(this).apply {
-            text = order.paymentMethod
-            textSize = 11.5f
-            setTextColor(Color.parseColor("#64748B"))
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
-            maxLines = 1
-            ellipsize = android.text.TextUtils.TruncateAt.END
-        }
-        val tvTotal = TextView(this).apply {
-            text = FormatUtils.money(order.total)
-            textSize = 15f
-            setTypeface(null, Typeface.BOLD)
-            setTextColor(if (order.status == OrderStatus.DELIVERED) Color.parseColor("#047857") else Color.parseColor("#0F172A"))
-        }
-        footer.addView(tvPay)
-        footer.addView(tvTotal)
-
-        col.addView(header)
-        col.addView(tvTime)
-        col.addView(tvCustomer)
-        col.addView(tvItems)
-        col.addView(footer)
-        card.addView(col)
-        card.isClickable = true
-        card.isFocusable = true
-        card.foreground = getDrawable(android.R.drawable.list_selector_background)
-        card.setOnClickListener {
-            startActivity(Intent(this, OrderDetailActivity::class.java).putExtra(OrderDetailActivity.EXTRA_ORDER_ID, order.id))
-        }
-        val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-        lp.setMargins(0, dp(8), 0, 0)
-        card.layoutParams = lp
-        return card
-    }
-
-    private fun statusBg(status: OrderStatus): android.graphics.drawable.GradientDrawable {
-        val color = when (status) {
-            OrderStatus.DELIVERED -> "#16A34A"
-            OrderStatus.SHIPPING -> "#2563EB"
-            OrderStatus.PROCESSING -> "#F59E0B"
-            OrderStatus.CANCELLED -> "#DC2626"
-        }
-        return android.graphics.drawable.GradientDrawable().apply {
-            shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-            cornerRadius = dp(20).toFloat()
-            setColor(Color.parseColor(color))
-        }
-    }
-
-    private fun csvEscape(s: String) = "\"" + s.replace("\"", "\"\"").replace("\n", " ") + "\""
-
-    private fun exportCsv() {
-        val orders = filtered()
-        val title = "FoodHub - Báo cáo doanh thu"
-        val sb = StringBuilder("\uFEFF$title\nKhoảng thời gian,${csvEscape(range.text.toString())}\nNgày xuất,${csvEscape(dateFormat.format(Date()))}\n\n")
-        sb.append("Mã đơn,Ngày giờ,Khách hàng,SĐT,Địa chỉ,Danh sách món,Tiền món,Phí ship,Giảm giá,Tổng tiền,Phương thức thanh toán,Trạng thái\n")
-        orders.sortedBy { it.createdAt }.forEach { o ->
-            val itemsStr = o.items.joinToString(" | ") { i -> "${i.name} x${i.quantity}" }
-            val cols = listOf(
-                o.code, FormatUtils.dateTime(o.createdAt), o.receiverName, o.phone, o.address,
-                itemsStr, o.subtotal.toString(), o.shippingFee.toString(), o.discount.toString(), o.total.toString(), o.paymentMethod, o.status.label
-            ).map { v -> csvEscape(v) }
-            sb.append(cols.joinToString(",")).append('\n')
-        }
-        val delivered = orders.filter { it.status == OrderStatus.DELIVERED }
-        sb.append("\nTỔNG DOANH THU (Đã giao),${delivered.sumOf { it.total }}\n")
-        sb.append("ĐƠN THÀNH CÔNG,${delivered.size}\n")
-        sb.append("ĐƠN HỦY,${orders.count { it.status == OrderStatus.CANCELLED }}\n")
-        sb.append("TỔNG SỐ ĐƠN,${orders.size}\n")
-        sb.append("AOV,${if (delivered.isEmpty()) 0 else delivered.sumOf { it.total } / delivered.size}\n")
-        try {
-            val name = "foodhub_revenue_${System.currentTimeMillis()}.csv"
-            val uri: Uri
-            if (Build.VERSION.SDK_INT >= 29) {
-                val values = android.content.ContentValues().apply {
-                    put(MediaStore.Downloads.DISPLAY_NAME, name)
-                    put(MediaStore.Downloads.MIME_TYPE, "text/csv")
-                    put(MediaStore.Downloads.RELATIVE_PATH, "Download")
-                }
-                uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)!!
-                contentResolver.openOutputStream(uri)!!.use { it.write(sb.toString().toByteArray(Charsets.UTF_8)) }
-            } else {
-                val file = File(getExternalFilesDir("Download"), name)
-                file.parentFile?.mkdirs()
-                file.writeText(sb.toString(), Charsets.UTF_8)
-                uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
-            }
-            Toast.makeText(this, "Đã xuất báo cáo: $name", Toast.LENGTH_SHORT).show()
-            startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
-                type = "text/csv"
-                putExtra(Intent.EXTRA_STREAM, uri)
-                putExtra(Intent.EXTRA_SUBJECT, title)
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }, "Chia sẻ báo cáo CSV"))
-        } catch (e: Exception) {
-            Toast.makeText(this, "Không thể xuất báo cáo: ${e.message}", Toast.LENGTH_LONG).show()
+            transactions.addView(AdminRevenueViewHelper.buildTransactionCard(this, order) { clicked ->
+                startActivity(Intent(this, OrderDetailActivity::class.java).putExtra(OrderDetailActivity.EXTRA_ORDER_ID, clicked.id))
+            })
         }
     }
 }

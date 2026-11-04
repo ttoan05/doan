@@ -124,12 +124,11 @@ class AdminOrderActivity : AppCompatActivity() {
         }
 
         if (searchQuery.isNotEmpty()) {
-            val q = searchQuery.lowercase()
             filtered = filtered.filter {
-                it.id.lowercase().contains(q) ||
-                it.receiverName.lowercase().contains(q) ||
-                it.phone.contains(q) ||
-                it.restaurant.lowercase().contains(q)
+                com.example.foodhub.utils.FormatUtils.matchesSearch(it.id, searchQuery) ||
+                com.example.foodhub.utils.FormatUtils.matchesSearch(it.receiverName, searchQuery) ||
+                it.phone.contains(searchQuery.trim()) ||
+                com.example.foodhub.utils.FormatUtils.matchesSearch(it.restaurant, searchQuery)
             }
         }
 

@@ -193,17 +193,16 @@ object FoodSizeHelper {
 
     fun getSizesForFood(food: Food): List<SizeOption> {
         val base = FormatUtils.parsePrice(food.price)
-        val customSizes = parseSizesJson(food.sizesJson)
-        if (customSizes.isNotEmpty()) {
+        if (food.sizesJson != null) {
+            val customSizes = parseSizesJson(food.sizesJson)
             return customSizes.map { SizeOption(it.name, it.priceDelta, base + it.priceDelta) }
         }
         return getAvailableSizes(food.name, food.category, base)
     }
 
     fun getToppingsForFood(food: Food): List<AdminTopping> {
-        val customToppings = parseToppingsJson(food.toppingsJson)
-        if (customToppings.isNotEmpty()) {
-            return customToppings
+        if (food.toppingsJson != null) {
+            return parseToppingsJson(food.toppingsJson)
         }
         return getDefaultToppings(food.name, food.category)
     }

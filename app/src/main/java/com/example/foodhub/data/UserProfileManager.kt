@@ -28,6 +28,8 @@ object UserProfileManager {
         private set
     var role: String = "user"
         private set
+    var avatarUri: String = ""
+        private set
 
     val isAdmin: Boolean
         get() = role.equals("admin", ignoreCase = true) || email.equals("admin@foodhub.com", ignoreCase = true)
@@ -46,6 +48,7 @@ object UserProfileManager {
         this.birthday = user.birthday
         this.job = user.job
         this.role = user.role
+        this.avatarUri = user.avatarUri
         this.username = if (user.email.contains("@")) user.email.substringBefore("@") else user.name.lowercase().replace(" ", "_")
         onChanged?.invoke()
     }
@@ -60,6 +63,7 @@ object UserProfileManager {
         this.job = ""
         this.role = "user"
         this.username = ""
+        this.avatarUri = ""
         onChanged?.invoke()
     }
 
@@ -69,7 +73,8 @@ object UserProfileManager {
         email: String,
         gender: String,
         birthday: String,
-        job: String
+        job: String,
+        avatarUri: String? = null
     ) {
         this.name = name
         this.phone = phone
@@ -77,10 +82,18 @@ object UserProfileManager {
         this.gender = gender
         this.birthday = birthday
         this.job = job
+        if (avatarUri != null) {
+            this.avatarUri = avatarUri
+        }
         NotificationStore.add(
             NotificationType.SYSTEM, "✏️", "Cập nhật thông tin thành công",
             "Thông tin cá nhân của bạn đã được lưu."
         )
+        onChanged?.invoke()
+    }
+
+    fun updateAvatar(newAvatarUri: String) {
+        this.avatarUri = newAvatarUri
         onChanged?.invoke()
     }
 }

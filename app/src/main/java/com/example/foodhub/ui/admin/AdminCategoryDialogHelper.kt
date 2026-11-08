@@ -8,6 +8,7 @@ import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import com.example.foodhub.R
 import com.example.foodhub.data.model.Restaurant
+import com.example.foodhub.utils.ImageUtils
 import com.example.foodhub.utils.SampleData
 import java.io.File
 import java.io.FileOutputStream
@@ -50,7 +51,7 @@ object AdminCategoryDialogHelper {
         fun updateImagePreview(path: String?) {
             if (!path.isNullOrEmpty() && File(path).exists()) {
                 try {
-                    val bitmap = BitmapFactory.decodeFile(path)
+                    val bitmap = ImageUtils.decodeSampledBitmap(path, 400, 300)
                     if (bitmap != null) {
                         ivUploadedPreview.setImageBitmap(bitmap)
                         ivUploadedPreview.visibility = View.VISIBLE
@@ -130,7 +131,7 @@ object AdminCategoryDialogHelper {
         fun updateImagePreview(path: String?) {
             if (!path.isNullOrEmpty() && File(path).exists()) {
                 try {
-                    val bitmap = BitmapFactory.decodeFile(path)
+                    val bitmap = ImageUtils.decodeSampledBitmap(path, 400, 300)
                     if (bitmap != null) {
                         ivUploadedPreview.setImageBitmap(bitmap)
                         ivUploadedPreview.visibility = View.VISIBLE
@@ -249,7 +250,7 @@ object AdminCategoryDialogHelper {
         fun updateImagePreview(path: String?) {
             if (!path.isNullOrEmpty() && File(path).exists()) {
                 try {
-                    val bitmap = BitmapFactory.decodeFile(path)
+                    val bitmap = ImageUtils.decodeSampledBitmap(path, 400, 300)
                     ivUploadedPreview.setImageBitmap(bitmap)
                     ivUploadedPreview.visibility = View.VISIBLE
                     tvChangePhotoBadge.visibility = View.VISIBLE
@@ -348,7 +349,7 @@ object AdminCategoryDialogHelper {
         fun updateImagePreview(path: String?) {
             if (!path.isNullOrEmpty() && File(path).exists()) {
                 try {
-                    val bitmap = BitmapFactory.decodeFile(path)
+                    val bitmap = ImageUtils.decodeSampledBitmap(path, 400, 300)
                     ivUploadedPreview.setImageBitmap(bitmap)
                     ivUploadedPreview.visibility = View.VISIBLE
                     tvChangePhotoBadge.visibility = View.VISIBLE
@@ -439,18 +440,6 @@ object AdminCategoryDialogHelper {
     }
 
     fun saveImageToInternalStorage(activity: AdminCategoryActivity, uri: Uri): String? {
-        return try {
-            val fileName = "img_${System.currentTimeMillis()}.jpg"
-            val file = File(activity.filesDir, fileName)
-            activity.contentResolver.openInputStream(uri)?.use { input ->
-                FileOutputStream(file).use { output ->
-                    input.copyTo(output)
-                }
-            }
-            file.absolutePath
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        return ImageUtils.saveUriToInternalStorage(activity, uri, "category")
     }
 }

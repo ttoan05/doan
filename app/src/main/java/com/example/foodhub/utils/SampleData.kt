@@ -22,12 +22,30 @@ object SampleData {
         get() = _categories
 
     val DEFAULT_FOODS = listOf(
-        Food(1, "Phở bò đặc biệt",   "Quán Phở Tuyệt",   4.8, 156, "45.000đ", "Phở",      "🍲", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_pho_bo),
-        Food(2, "Gà rán giòn cay",   "KFC Việt Nam",      4.9, 234, "55.000đ", "Gà rán",   "🍗", Color.parseColor("#E76F51"), Color.parseColor("#C1440E"), R.drawable.img_ga_ran),
-        Food(3, "Bánh mì thập cẩm",  "Bánh mì Sài Gòn",  4.7, 189, "25.000đ", "Bánh mì",  "🥖", Color.parseColor("#F4A261"), Color.parseColor("#F9C74F"), R.drawable.img_banh_mi),
-        Food(4, "Cơm tấm sườn nướng","Cơm tấm Quỳnh",    4.6, 112, "35.000đ", "Cơm",      "🍛", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_com_tam),
-        Food(5, "Mì Quảng tôm thịt", "Mì Quảng Huế",     4.8,  98, "40.000đ", "Mì",       "🍝", Color.parseColor("#F4A261"), Color.parseColor("#E9C46A"), R.drawable.img_mi_quang),
-        Food(6, "Nước chanh đá",     "Quán nước mía",     4.5,  45, "10.000đ", "Đồ uống",  "🥤", Color.parseColor("#457B9D"), Color.parseColor("#1D3557"), R.drawable.img_nuoc_chanh)
+        Food(1, "Phở bò đặc biệt",   "Quán Phở Tuyệt",   4.8, 156, "45.000đ", "Phở",      "🍲", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_pho_bo,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Phở bò đặc biệt", "Phở")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Phở bò đặc biệt", "Phở"))
+        ),
+        Food(2, "Gà rán giòn cay",   "KFC Việt Nam",      4.9, 234, "55.000đ", "Gà rán",   "🍗", Color.parseColor("#E76F51"), Color.parseColor("#C1440E"), R.drawable.img_ga_ran,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Gà rán giòn cay", "Gà rán")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Gà rán giòn cay", "Gà rán"))
+        ),
+        Food(3, "Bánh mì thập cẩm",  "Bánh mì Sài Gòn",  4.7, 189, "25.000đ", "Bánh mì",  "🥖", Color.parseColor("#F4A261"), Color.parseColor("#F9C74F"), R.drawable.img_banh_mi,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Bánh mì thập cẩm", "Bánh mì")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Bánh mì thập cẩm", "Bánh mì"))
+        ),
+        Food(4, "Cơm tấm sườn nướng","Cơm tấm Quỳnh",    4.6, 112, "35.000đ", "Cơm",      "🍛", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_com_tam,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Cơm tấm sườn nướng", "Cơm")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Cơm tấm sườn nướng", "Cơm"))
+        ),
+        Food(5, "Mì Quảng tôm thịt", "Mì Quảng Huế",     4.8,  98, "40.000đ", "Mì",       "🍝", Color.parseColor("#F4A261"), Color.parseColor("#E9C46A"), R.drawable.img_mi_quang,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Mì Quảng tôm thịt", "Mì")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Mì Quảng tôm thịt", "Mì"))
+        ),
+        Food(6, "Nước chanh đá",     "Quán nước mía",     4.5,  45, "10.000đ", "Đồ uống",  "🥤", Color.parseColor("#457B9D"), Color.parseColor("#1D3557"), R.drawable.img_nuoc_chanh,
+            sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Nước chanh đá", "Đồ uống")),
+            toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Nước chanh đá", "Đồ uống"))
+        )
     )
 
     private val _foods = mutableListOf<Food>().apply { addAll(DEFAULT_FOODS) }
@@ -241,6 +259,7 @@ object SampleData {
                 }
                 _categories.addAll(cats.filter { it != "Tất cả" })
             }
+            db.syncDefaultFoodSizesAndToppings()
             val foods = db.getAllFoods()
             if (foods.isNotEmpty()) {
                 _foods.clear()

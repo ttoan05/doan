@@ -24,7 +24,7 @@ object FoodSizeHelper {
     )
 
     fun parseSizesJson(json: String?): List<AdminSize> {
-        if (json.isNullOrBlank()) return emptyList()
+        if (json.isNullOrBlank() || json.trim() == "[]") return emptyList()
         val list = mutableListOf<AdminSize>()
         try {
             val arr = JSONArray(json)
@@ -52,7 +52,7 @@ object FoodSizeHelper {
     }
 
     fun parseToppingsJson(json: String?): List<AdminTopping> {
-        if (json.isNullOrBlank()) return emptyList()
+        if (json.isNullOrBlank() || json.trim() == "[]") return emptyList()
         val list = mutableListOf<AdminTopping>()
         try {
             val arr = JSONArray(json)
@@ -87,40 +87,51 @@ object FoodSizeHelper {
         val lowerCat = category.lowercase()
 
         return when {
-            lowerCat.contains("uống") || lowerName.contains("chanh") || lowerName.contains("trà") || lowerName.contains("cà phê") -> {
+            lowerCat.contains("uống") || lowerName.contains("chanh") || lowerName.contains("trà") || lowerName.contains("cà phê") || lowerName.contains("nước") -> {
                 listOf(
-                    AdminSize("Size Vừa (M)", 0),
-                    AdminSize("Size Lớn (L)", 5000)
+                    AdminSize("Size Vừa (Ly 500ml - M)", 0),
+                    AdminSize("Size Lớn (Ly 700ml - L)", 6000),
+                    AdminSize("Size Khổng Lồ (Ly 1000ml - XL)", 12000)
+                )
+            }
+            lowerName.contains("mì quảng") || lowerName.contains("quảng") -> {
+                listOf(
+                    AdminSize("Tô Vừa (Tiêu chuẩn)", 0),
+                    AdminSize("Tô Lớn (Nhiều tôm & thịt)", 12000),
+                    AdminSize("Tô Đặc Biệt Cao Cấp", 20000)
                 )
             }
             lowerCat.contains("bánh mì") || lowerName.contains("bánh mì") -> {
                 listOf(
                     AdminSize("Ổ Tiêu chuẩn", 0),
-                    AdminSize("Ổ Đặc biệt (Nhiều nhân)", 8000)
+                    AdminSize("Ổ Đặc biệt (Gấp đôi nhân thịt)", 10000)
                 )
             }
             lowerCat.contains("cơm") || lowerName.contains("cơm") -> {
                 listOf(
                     AdminSize("Dĩa Tiêu chuẩn", 0),
-                    AdminSize("Dĩa Lớn (Thêm cơm & thịt)", 12000)
+                    AdminSize("Dĩa Lớn (Thêm cơm & mỡ hành)", 8000),
+                    AdminSize("Dĩa Đặc Biệt Sườn Cây Khủng", 20000)
                 )
             }
-            lowerCat.contains("phở") || lowerCat.contains("mì") || lowerName.contains("phở") || lowerName.contains("mì") -> {
+            lowerCat.contains("phở") || lowerCat.contains("mì") || lowerCat.contains("bún") || lowerName.contains("phở") || lowerName.contains("bún") || lowerName.contains("hủ tiếu") -> {
                 listOf(
                     AdminSize("Tô Tiêu chuẩn", 0),
-                    AdminSize("Tô Lớn Đặc biệt", 10000)
+                    AdminSize("Tô Lớn (Thêm bánh & thịt)", 10000),
+                    AdminSize("Tô Đặc Biệt Khổng Lồ", 20000)
                 )
             }
             lowerCat.contains("gà") || lowerName.contains("gà") -> {
                 listOf(
-                    AdminSize("Phần Tiêu chuẩn", 0),
-                    AdminSize("Phần Lớn Siêu giòn", 15000)
+                    AdminSize("Phần 1 Miếng (Tiêu chuẩn)", 0),
+                    AdminSize("Phần 2 Miếng Giòn Cay", 35000),
+                    AdminSize("Combo 3 Miếng + Khoai tây", 65000)
                 )
             }
             else -> {
                 listOf(
-                    AdminSize("Size Tiêu chuẩn (Vừa)", 0),
-                    AdminSize("Size Lớn (Nhiều hơn)", 10000)
+                    AdminSize("Phần Tiêu chuẩn", 0),
+                    AdminSize("Phần Lớn Đặc biệt", 12000)
                 )
             }
         }
@@ -133,51 +144,66 @@ object FoodSizeHelper {
         val lowerName = foodName.lowercase()
         val lowerCat = category.lowercase()
         return when {
-            lowerCat.contains("uống") || lowerName.contains("chanh") || lowerName.contains("trà") || lowerName.contains("cà phê") -> {
+            lowerCat.contains("uống") || lowerName.contains("chanh") || lowerName.contains("trà") || lowerName.contains("cà phê") || lowerName.contains("nước") -> {
                 listOf(
                     AdminTopping("Trân châu đen dẻo", 6000),
                     AdminTopping("Thạch nha đam giòn", 6000),
                     AdminTopping("Kem cheese béo ngậy", 10000),
-                    AdminTopping("Thêm chanh & mật ong", 5000)
+                    AdminTopping("Trân châu trắng giòn 3Q", 6000),
+                    AdminTopping("Thêm chanh & mật ong hoa rừng", 5000)
+                )
+            }
+            lowerName.contains("mì quảng") || lowerName.contains("quảng") -> {
+                listOf(
+                    AdminTopping("Bánh tráng nướng mè giòn rụm", 6000),
+                    AdminTopping("Trứng cút rim đậm đà (3 quả)", 6000),
+                    AdminTopping("Thêm tôm tươi rim thịt ba chỉ", 15000),
+                    AdminTopping("Đậu phộng rang & ớt xanh ngâm", 3000),
+                    AdminTopping("Đĩa rau sống búp chuối tươi", 5000)
                 )
             }
             lowerCat.contains("cơm") || lowerName.contains("cơm") -> {
                 listOf(
                     AdminTopping("Trứng ốp la lòng đào", 7000),
-                    AdminTopping("Chả trứng hấp thịt", 8000),
-                    AdminTopping("Thêm sườn nướng mật ong", 18000),
+                    AdminTopping("Chả trứng hấp thịt nấm mèo", 8000),
+                    AdminTopping("Bì heo thơm thính giòn", 7000),
+                    AdminTopping("Thêm sườn nướng mật ong", 22000),
                     AdminTopping("Chén canh súp rong biển", 6000)
                 )
             }
-            lowerCat.contains("phở") || lowerCat.contains("mì") || lowerName.contains("phở") || lowerName.contains("mì") || lowerName.contains("bún") -> {
+            lowerCat.contains("phở") || lowerCat.contains("mì") || lowerCat.contains("bún") || lowerName.contains("phở") || lowerName.contains("bún") || lowerName.contains("hủ tiếu") -> {
                 listOf(
-                    AdminTopping("Bò viên gân (3 viên)", 10000),
+                    AdminTopping("Bò viên gân giòn (3 viên)", 10000),
                     AdminTopping("Thịt bò tái thêm", 15000),
                     AdminTopping("Trứng gà chần nước dùng", 7000),
-                    AdminTopping("Quẩy giòn giòn (2 cái)", 5000)
+                    AdminTopping("Quẩy giòn giòn (2 cái)", 5000),
+                    AdminTopping("Tiết luộc mềm", 5000)
                 )
             }
             lowerCat.contains("gà") || lowerName.contains("gà") -> {
                 listOf(
                     AdminTopping("Khoai tây chiên giòn", 15000),
-                    AdminTopping("Sốt phô mai cay", 6000),
-                    AdminTopping("Bắp cải trộn coleslaw", 8000),
-                    AdminTopping("1 Lon nước ngọt 330ml", 12000)
+                    AdminTopping("Sốt phô mai cay béo ngậy", 8000),
+                    AdminTopping("Bắp cải trộn coleslaw", 10000),
+                    AdminTopping("1 Lon Pepsi / Coca 330ml", 12000),
+                    AdminTopping("Thêm tương ớt & sốt cà", 3000)
                 )
             }
             lowerCat.contains("bánh mì") || lowerName.contains("bánh mì") -> {
                 listOf(
                     AdminTopping("Trứng ốp la thêm", 6000),
-                    AdminTopping("Thêm pate & bơ thơm", 5000),
-                    AdminTopping("Thêm chả lụa bì heo", 7000),
-                    AdminTopping("Thêm xúc xích nướng", 8000)
+                    AdminTopping("Thêm pate béo & bơ thơm", 5000),
+                    AdminTopping("Thêm chả lụa & giò thủ", 7000),
+                    AdminTopping("Thêm xúc xích nướng", 8000),
+                    AdminTopping("Thêm dưa chua & ngò gai", 3000)
                 )
             }
             else -> {
                 listOf(
                     AdminTopping("Trứng ốp la", 7000),
                     AdminTopping("Thêm sốt đặc biệt", 5000),
-                    AdminTopping("Thêm phần rau & đồ chua", 4000)
+                    AdminTopping("Thêm phần rau & đồ chua", 4000),
+                    AdminTopping("Thêm chén súp nóng", 6000)
                 )
             }
         }
@@ -193,16 +219,17 @@ object FoodSizeHelper {
 
     fun getSizesForFood(food: Food): List<SizeOption> {
         val base = FormatUtils.parsePrice(food.price)
-        if (food.sizesJson != null) {
-            val customSizes = parseSizesJson(food.sizesJson)
+        val customSizes = parseSizesJson(food.sizesJson)
+        if (customSizes.isNotEmpty()) {
             return customSizes.map { SizeOption(it.name, it.priceDelta, base + it.priceDelta) }
         }
         return getAvailableSizes(food.name, food.category, base)
     }
 
     fun getToppingsForFood(food: Food): List<AdminTopping> {
-        if (food.toppingsJson != null) {
-            return parseToppingsJson(food.toppingsJson)
+        val custom = parseToppingsJson(food.toppingsJson)
+        if (custom.isNotEmpty()) {
+            return custom
         }
         return getDefaultToppings(food.name, food.category)
     }

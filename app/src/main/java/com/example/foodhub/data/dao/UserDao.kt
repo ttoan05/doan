@@ -4,6 +4,9 @@ import android.content.ContentValues
 import android.database.Cursor
 import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.model.User
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // =========================================================================
 // 1. QUẢN LÝ TÀI KHOẢN NGƯỜI DÙNG (USERS)
@@ -14,6 +17,7 @@ interface UserDao : BaseDao {
     fun registerUser(user: User): Long {
         if (isEmailExists(user.email)) return -1L
         val db = dbWritable
+        val nowStr = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(Date())
         val values = ContentValues().apply {
             put(DatabaseHelper.COL_NAME, user.name)
             put(DatabaseHelper.COL_EMAIL, user.email.trim().lowercase())
@@ -23,6 +27,10 @@ interface UserDao : BaseDao {
             put(DatabaseHelper.COL_BIRTHDAY, user.birthday)
             put(DatabaseHelper.COL_JOB, user.job)
             put(DatabaseHelper.COL_ROLE, if (user.role.isNotEmpty()) user.role else "user")
+            put(DatabaseHelper.COL_AVATAR_URI, user.avatarUri)
+            put(DatabaseHelper.COL_ADDRESS, user.address)
+            put(DatabaseHelper.COL_CREATED_AT, if (user.createdAt.isNotEmpty()) user.createdAt else nowStr)
+            put(DatabaseHelper.COL_STATUS, if (user.status.isNotEmpty()) user.status else "ACTIVE")
         }
         return db.insert(DatabaseHelper.TABLE_USERS, null, values)
     }
@@ -150,6 +158,100 @@ interface UserDao : BaseDao {
         return rows > 0
     }
 
+    fun getAllCustomers(): List<User> {
+        val list = mutableListOf<User>()
+        try {
+            val db = dbReadable
+            val cursor = db.query(
+                DatabaseHelper.TABLE_USERS,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "${DatabaseHelper.COL_ID} DESC"
+            )
+            while (cursor.moveToNext()) {
+                list.add(cursorToUser(cursor))
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    fun searchCustomers(query: String): List<User> {
+        val list = mutableListOf<User>()
+        try {
+            val db = dbReadable
+            val q = "%${query.trim().lowercase()}%"
+            val cursor = db.query(
+                DatabaseHelper.TABLE_USERS,
+                null,
+                "LOWER(${DatabaseHelper.COL_NAME}) LIKE ? OR LOWER(${DatabaseHelper.COL_EMAIL}) LIKE ? OR ${DatabaseHelper.COL_PHONE} LIKE ?",
+                arrayOf(q, q, q),
+                null,
+                null,
+                "${DatabaseHelper.COL_ID} DESC"
+            )
+            while (cursor.moveToNext()) {
+                list.add(cursorToUser(cursor))
+            }
+            cursor.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return list
+    }
+
+    fun updateUserStatus(userId: Long, newStatus: String): Boolean {
+        return try {
+            val db = dbWritable
+            val values = ContentValues().apply {
+                put(DatabaseHelper.COL_STATUS, newStatus)
+            }
+            db.update(DatabaseHelper.TABLE_USERS, values, "${DatabaseHelper.COL_ID} = ?", arrayOf(userId.toString())) > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun updateCustomerByAdmin(user: User): Boolean {
+        return try {
+            val db = dbWritable
+            val values = ContentValues().apply {
+                put(DatabaseHelper.COL_NAME, user.name)
+                put(DatabaseHelper.COL_EMAIL, user.email.trim().lowercase())
+                put(DatabaseHelper.COL_PHONE, user.phone.trim())
+                if (user.password.isNotEmpty()) {
+                    put(DatabaseHelper.COL_PASSWORD, user.password)
+                }
+                put(DatabaseHelper.COL_GENDER, user.gender)
+                put(DatabaseHelper.COL_BIRTHDAY, user.birthday)
+                put(DatabaseHelper.COL_JOB, user.job)
+                put(DatabaseHelper.COL_ROLE, user.role)
+                put(DatabaseHelper.COL_ADDRESS, user.address)
+                put(DatabaseHelper.COL_STATUS, user.status)
+            }
+            db.update(DatabaseHelper.TABLE_USERS, values, "${DatabaseHelper.COL_ID} = ?", arrayOf(user.id.toString())) > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    fun deleteCustomer(userId: Long): Boolean {
+        return try {
+            val db = dbWritable
+            db.delete(DatabaseHelper.TABLE_USERS, "${DatabaseHelper.COL_ID} = ?", arrayOf(userId.toString())) > 0
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
     fun cursorToUser(cursor: Cursor): User {
         val id = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ID))
         val name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_NAME))
@@ -163,6 +265,12 @@ interface UserDao : BaseDao {
         val role = if (roleColIndex >= 0) cursor.getString(roleColIndex) ?: "user" else "user"
         val avatarColIndex = cursor.getColumnIndex(DatabaseHelper.COL_AVATAR_URI)
         val avatarUri = if (avatarColIndex >= 0) cursor.getString(avatarColIndex) ?: "" else ""
-        return User(id, name, email, phone, password, gender, birthday, job, role, avatarUri)
+        val addressColIndex = cursor.getColumnIndex(DatabaseHelper.COL_ADDRESS)
+        val address = if (addressColIndex >= 0) cursor.getString(addressColIndex) ?: "" else ""
+        val createdAtColIndex = cursor.getColumnIndex(DatabaseHelper.COL_CREATED_AT)
+        val createdAt = if (createdAtColIndex >= 0) cursor.getString(createdAtColIndex) ?: "" else ""
+        val statusColIndex = cursor.getColumnIndex(DatabaseHelper.COL_STATUS)
+        val status = if (statusColIndex >= 0) cursor.getString(statusColIndex) ?: "ACTIVE" else "ACTIVE"
+        return User(id, name, email, phone, password, gender, birthday, job, role, avatarUri, address, createdAt, status)
     }
 }

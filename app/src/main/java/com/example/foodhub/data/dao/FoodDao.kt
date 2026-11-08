@@ -52,8 +52,11 @@ interface FoodDao : BaseDao {
                 val bgEnd = if (bgEndCol >= 0) cursor.getInt(bgEndCol) else 0
                 val imageRes = if (imgCol >= 0) cursor.getInt(imgCol) else 0
                 val imageUri = if (uriCol >= 0) cursor.getString(uriCol) ?: "" else ""
-                val sizesJson = if (sizesCol >= 0 && !cursor.isNull(sizesCol)) cursor.getString(sizesCol) else null
-                val toppingsJson = if (toppingsCol >= 0 && !cursor.isNull(toppingsCol)) cursor.getString(toppingsCol) else null
+                val rawSizes = if (sizesCol >= 0 && !cursor.isNull(sizesCol)) cursor.getString(sizesCol) else null
+                val sizesJson = rawSizes?.takeIf { it.isNotBlank() && it.trim() != "[]" }
+
+                val rawToppings = if (toppingsCol >= 0 && !cursor.isNull(toppingsCol)) cursor.getString(toppingsCol) else null
+                val toppingsJson = rawToppings?.takeIf { it.isNotBlank() && it.trim() != "[]" }
                 val isAvailable = if (availCol >= 0) cursor.getInt(availCol) == 1 else true
 
                 val actualImageRes = SampleData.resolveFoodImage(id, name, imageRes, category)
@@ -211,6 +214,56 @@ interface FoodDao : BaseDao {
         } catch (e: Exception) {
             e.printStackTrace()
             false
+        }
+    }
+
+    /** Tự động đồng bộ kích cỡ và topping mặc định phù hợp cho các món chưa có dữ liệu */
+    fun syncDefaultFoodSizesAndToppings() {
+        try {
+            val db = dbWritable
+            ensureFoodsTable(db)
+            val cursor = db.rawQuery(
+                "SELECT ${DatabaseHelper.COL_FOOD_ID}, ${DatabaseHelper.COL_FOOD_NAME}, ${DatabaseHelper.COL_FOOD_CATEGORY}, ${DatabaseHelper.COL_FOOD_SIZES}, ${DatabaseHelper.COL_FOOD_TOPPINGS} FROM ${DatabaseHelper.TABLE_FOODS}",
+                null
+            )
+            val updates = mutableListOf<Triple<Int, String, String>>()
+            while (cursor.moveToNext()) {
+                val id = cursor.getInt(0)
+                val name = cursor.getString(1) ?: ""
+                val category = cursor.getString(2) ?: ""
+                val sizes = cursor.getString(3) ?: ""
+                val toppings = cursor.getString(4) ?: ""
+
+                val needSizes = sizes.isBlank() || sizes.trim() == "[]"
+                val needToppings = toppings.isBlank() || toppings.trim() == "[]"
+
+                if (needSizes || needToppings) {
+                    val sJson = if (needSizes) {
+                        com.example.foodhub.utils.FoodSizeHelper.sizesToJson(
+                            com.example.foodhub.utils.FoodSizeHelper.getDefaultSizes(name, category)
+                        )
+                    } else sizes
+
+                    val tJson = if (needToppings) {
+                        com.example.foodhub.utils.FoodSizeHelper.toppingsToJson(
+                            com.example.foodhub.utils.FoodSizeHelper.getDefaultToppings(name, category)
+                        )
+                    } else toppings
+
+                    updates.add(Triple(id, sJson, tJson))
+                }
+            }
+            cursor.close()
+
+            updates.forEach { (id, sJson, tJson) ->
+                val cv = ContentValues().apply {
+                    put(DatabaseHelper.COL_FOOD_SIZES, sJson)
+                    put(DatabaseHelper.COL_FOOD_TOPPINGS, tJson)
+                }
+                db.update(DatabaseHelper.TABLE_FOODS, cv, "${DatabaseHelper.COL_FOOD_ID} = ?", arrayOf(id.toString()))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 }

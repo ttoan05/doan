@@ -1,7 +1,6 @@
 package com.example.foodhub.ui.account
 
 import android.app.DatePickerDialog
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -17,9 +16,7 @@ import com.example.foodhub.R
 import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.UserProfileManager
 import com.example.foodhub.data.model.User
-import com.example.foodhub.ui.order.OrderDetailDialogHelper
 import com.example.foodhub.utils.ImageUtils
-import java.io.File
 import java.util.Calendar
 
 class UserInfoActivity : AppCompatActivity() {
@@ -34,10 +31,10 @@ class UserInfoActivity : AppCompatActivity() {
     private lateinit var tvAvatarLetterInfo: TextView
     private lateinit var ivAvatarPhotoInfo: ImageView
 
-    // Bộ chọn ảnh từ thư viện thiết bị
+    // Bộ chọn ảnh từ thư viện thiết bị - Lưu stream 1 lần duy nhất, chống tràn bộ nhớ
     private val pickAvatarLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
-            val savedPath = OrderDetailDialogHelper.saveImageToInternalStorage(this, uri)
+            val savedPath = ImageUtils.saveUriToInternalStorage(this, uri, "avatar")
             if (savedPath != null) {
                 applyNewAvatar(savedPath)
             } else {
@@ -106,16 +103,12 @@ class UserInfoActivity : AppCompatActivity() {
 
     private fun renderAvatar(avatarUri: String, letter: String) {
         if (avatarUri.isNotEmpty()) {
-            val file = File(avatarUri)
-            if (file.exists()) {
-                val bitmap = BitmapFactory.decodeFile(file.absolutePath)
-                if (bitmap != null) {
-                    val circularBitmap = ImageUtils.getCircularBitmap(bitmap)
-                    ivAvatarPhotoInfo.setImageBitmap(circularBitmap)
-                    ivAvatarPhotoInfo.visibility = View.VISIBLE
-                    tvAvatarLetterInfo.visibility = View.GONE
-                    return
-                }
+            val circularBitmap = ImageUtils.getCircularAvatar(avatarUri, 200)
+            if (circularBitmap != null) {
+                ivAvatarPhotoInfo.setImageBitmap(circularBitmap)
+                ivAvatarPhotoInfo.visibility = View.VISIBLE
+                tvAvatarLetterInfo.visibility = View.GONE
+                return
             }
         }
         // Mặc định hiển thị chữ cái
@@ -129,15 +122,6 @@ class UserInfoActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
-
-        dialog.window?.apply {
-            setBackgroundDrawableResource(android.R.color.transparent)
-            setGravity(android.view.Gravity.BOTTOM)
-            setLayout(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
 
         dialogView.findViewById<View>(R.id.btnOptionPickGallery).setOnClickListener {
             dialog.dismiss()
@@ -154,6 +138,14 @@ class UserInfoActivity : AppCompatActivity() {
         }
 
         dialog.show()
+        dialog.window?.apply {
+            setBackgroundDrawableResource(android.R.color.transparent)
+            setGravity(android.view.Gravity.BOTTOM)
+            setLayout(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
     }
 
     private fun applyNewAvatar(savedPath: String) {

@@ -25,6 +25,7 @@ import com.example.foodhub.data.VoucherStore
 import com.example.foodhub.data.model.SavedAddress
 import com.example.foodhub.ui.address.AddressActivity
 import com.example.foodhub.ui.admin.AdminCategoryActivity
+import com.example.foodhub.ui.admin.AdminCustomerActivity
 import com.example.foodhub.ui.admin.AdminFoodActivity
 import com.example.foodhub.ui.admin.AdminOrderActivity
 import com.example.foodhub.ui.admin.AdminRevenueActivity
@@ -78,6 +79,10 @@ class AccountActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.btnAdminRevenue).setOnClickListener {
             startActivity(Intent(this, AdminRevenueActivity::class.java))
+        }
+
+        findViewById<View>(R.id.btnAdminUsers)?.setOnClickListener {
+            startActivity(Intent(this, AdminCustomerActivity::class.java))
         }
 
         // ==========================================
@@ -210,17 +215,13 @@ class AccountActivity : AppCompatActivity() {
 
         val avatarUri = UserProfileManager.avatarUri
         if (avatarUri.isNotEmpty()) {
-            val file = java.io.File(avatarUri)
-            if (file.exists()) {
-                val bitmap = android.graphics.BitmapFactory.decodeFile(file.absolutePath)
-                if (bitmap != null) {
-                    val circular = com.example.foodhub.utils.ImageUtils.getCircularBitmap(bitmap)
-                    ivAvatarPhoto.setImageBitmap(circular)
-                    ivAvatarPhoto.visibility = View.VISIBLE
-                    tvAvatarLetter.visibility = View.GONE
-                    renderRoleBadge()
-                    return
-                }
+            val circular = com.example.foodhub.utils.ImageUtils.getCircularAvatar(avatarUri, 200)
+            if (circular != null) {
+                ivAvatarPhoto.setImageBitmap(circular)
+                ivAvatarPhoto.visibility = View.VISIBLE
+                tvAvatarLetter.visibility = View.GONE
+                renderRoleBadge()
+                return
             }
         }
         tvAvatarLetter.text = UserProfileManager.avatarLetter

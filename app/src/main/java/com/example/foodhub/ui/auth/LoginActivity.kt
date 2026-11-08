@@ -74,14 +74,19 @@ class LoginActivity : AppCompatActivity() {
             }
 
             if (autoUser != null) {
-                UserProfileManager.setUser(autoUser)
-                CartManager.init(this, autoUser.id)
-                OrderManager.init(this, autoUser.id)
-                NotificationStore.init(this, autoUser.id)
+                if (autoUser.status.equals("LOCKED", ignoreCase = true)) {
+                    sharedPref.edit().putBoolean("remember_me", false).remove("saved_user_id").apply()
+                    Toast.makeText(this, "⚠️ Tài khoản của bạn đã bị khóa bởi Quản trị viên!", Toast.LENGTH_LONG).show()
+                } else {
+                    UserProfileManager.setUser(autoUser)
+                    CartManager.init(this, autoUser.id)
+                    OrderManager.init(this, autoUser.id)
+                    NotificationStore.init(this, autoUser.id)
 
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-                return
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                    return
+                }
             }
         }
 
@@ -186,6 +191,13 @@ class LoginActivity : AppCompatActivity() {
         val user = dbHelper.checkUser(email, password)
 
         if (user != null) {
+            // Kiểm tra trạng thái tài khoản có bị khóa không
+            if (user.status.equals("LOCKED", ignoreCase = true)) {
+                showError(etEmail, tvEmailError, "Tài khoản này đã bị khóa bởi Quản trị viên!")
+                Toast.makeText(this, "⚠️ Tài khoản của bạn đã bị khóa! Vui lòng liên hệ Quản trị viên.", Toast.LENGTH_LONG).show()
+                return
+            }
+
             // Đúng tài khoản và đúng mật khẩu trong SQLite -> Cho phép đăng nhập
             UserProfileManager.setUser(user)
 

@@ -314,40 +314,7 @@ object OrderDetailDialogHelper {
     }
 
     fun saveImageToInternalStorage(context: Context, uri: Uri): String? {
-        return try {
-            val fileName = "review_img_${System.currentTimeMillis()}.jpg"
-            val file = File(context.filesDir, fileName)
-
-            val inputStream = context.contentResolver.openInputStream(uri)
-            val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeStream(inputStream, null, boundsOptions)
-            inputStream?.close()
-
-            var sampleSize = 1
-            val maxDimension = 1200
-            val maxOut = maxOf(boundsOptions.outWidth, boundsOptions.outHeight)
-            while (maxOut / sampleSize > maxDimension) {
-                sampleSize *= 2
-            }
-
-            val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-            val secondStream = context.contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(secondStream, null, decodeOptions)
-            secondStream?.close()
-
-            if (bitmap != null) {
-                val outputStream = FileOutputStream(file)
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 85, outputStream)
-                outputStream.flush()
-                outputStream.close()
-                file.absolutePath
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        return com.example.foodhub.utils.ImageUtils.saveUriToInternalStorage(context, uri, "review")
     }
 
     fun dialPhoneNumber(context: Context, rawPhone: String) {

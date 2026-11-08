@@ -264,7 +264,7 @@ object OrderManager {
         )
         add(
             "Cơm tấm Quỳnh", now - 2 * day,
-            listOf(CartItem(4, "Cơm tấm sườn nướng", "Cơm tấm Quỳnh", "🍛", 35_000, 1)),
+            listOf(CartItem(4, "Cơm tấm sườn nướng", "Cơm tấm Quỳnh", "🍱", 35_000, 1)),
             "Thanh toán khi nhận hàng (COD)", OrderStatus.CANCELLED, -1
         )
     }

@@ -38,7 +38,7 @@ class DatabaseHelper private constructor(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "foodhub_app.db"
-        private const val DATABASE_VERSION = 15
+        private const val DATABASE_VERSION = 16
 
         // Bảng users
         const val TABLE_USERS = "users"
@@ -52,6 +52,9 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_JOB = "job"
         const val COL_ROLE = "role" // "user" hoặc "admin"
         const val COL_AVATAR_URI = "avatar_uri"
+        const val COL_ADDRESS = "address"
+        const val COL_CREATED_AT = "created_at"
+        const val COL_STATUS = "status" // "ACTIVE" hoặc "LOCKED"
 
         // Bảng cart_items (Giỏ hàng riêng theo từng user_id)
         const val TABLE_CART = "cart_items"
@@ -252,6 +255,7 @@ class DatabaseHelper private constructor(context: Context) :
             addColumnIfMissing(db, TABLE_CATEGORIES, COL_CAT_IMAGE_URI, "TEXT DEFAULT ''")
             addColumnIfMissing(db, TABLE_FOODS, COL_FOOD_IS_AVAILABLE, "INTEGER DEFAULT 1")
             addColumnIfMissing(db, TABLE_REVIEWS, COL_REVIEW_IMAGE_URI, "TEXT DEFAULT ''")
+            ensureUsersTable(db)
             ensureFoodsTable(db)
             ensureRestaurantsTable(db)
             ensureOrdersTable(db)
@@ -298,8 +302,24 @@ class DatabaseHelper private constructor(context: Context) :
         }
     }
 
+    override fun onOpen(db: SQLiteDatabase) {
+        super.onOpen(db)
+        try {
+            ensureUsersTable(db)
+        } catch (_: Throwable) {}
+    }
+
+    fun ensureUsersTable(db: SQLiteDatabase) {
+        db.execSQL(createUsersTable())
+        addColumnIfMissing(db, TABLE_USERS, COL_ROLE, "TEXT DEFAULT 'user'")
+        addColumnIfMissing(db, TABLE_USERS, COL_AVATAR_URI, "TEXT DEFAULT ''")
+        addColumnIfMissing(db, TABLE_USERS, COL_ADDRESS, "TEXT DEFAULT ''")
+        addColumnIfMissing(db, TABLE_USERS, COL_CREATED_AT, "TEXT DEFAULT ''")
+        addColumnIfMissing(db, TABLE_USERS, COL_STATUS, "TEXT DEFAULT 'ACTIVE'")
+    }
+
     fun createUsersTable(): String = """
-        CREATE TABLE IF NOT EXISTS $TABLE_USERS (\
+        CREATE TABLE IF NOT EXISTS $TABLE_USERS (
             $COL_ID INTEGER PRIMARY KEY AUTOINCREMENT,
             $COL_NAME TEXT NOT NULL,
             $COL_EMAIL TEXT UNIQUE NOT NULL,
@@ -309,7 +329,10 @@ class DatabaseHelper private constructor(context: Context) :
             $COL_BIRTHDAY TEXT DEFAULT '',
             $COL_JOB TEXT DEFAULT '',
             $COL_ROLE TEXT DEFAULT 'user',
-            $COL_AVATAR_URI TEXT DEFAULT ''
+            $COL_AVATAR_URI TEXT DEFAULT '',
+            $COL_ADDRESS TEXT DEFAULT '',
+            $COL_CREATED_AT TEXT DEFAULT '',
+            $COL_STATUS TEXT DEFAULT 'ACTIVE'
         )
     """.trimIndent()
 

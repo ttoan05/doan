@@ -429,16 +429,18 @@ object AdminFoodDialogHelper {
         if (currentIdx >= 0) spCategory.setSelection(currentIdx)
 
         // Populate existing sizes or defaults
-        val initialSizes = if (food.sizesJson != null) {
-            FoodSizeHelper.parseSizesJson(food.sizesJson)
+        val parsedSizes = FoodSizeHelper.parseSizesJson(food.sizesJson)
+        val initialSizes = if (parsedSizes.isNotEmpty()) {
+            parsedSizes
         } else {
             FoodSizeHelper.getDefaultSizes(food.name, food.category)
         }
         initialSizes.forEach { addSizeRow(activity, llSizes, it.name, it.priceDelta) }
 
         // Populate existing toppings or defaults
-        val initialToppings = if (food.toppingsJson != null) {
-            FoodSizeHelper.parseToppingsJson(food.toppingsJson)
+        val parsedToppings = FoodSizeHelper.parseToppingsJson(food.toppingsJson)
+        val initialToppings = if (parsedToppings.isNotEmpty()) {
+            parsedToppings
         } else {
             FoodSizeHelper.getDefaultToppings(food.name, food.category)
         }
@@ -543,44 +545,6 @@ object AdminFoodDialogHelper {
     }
 
     fun saveImageToInternalStorage(activity: AdminFoodActivity, uri: Uri): String? {
-        return try {
-            val fileName = "food_${System.currentTimeMillis()}.jpg"
-            val file = File(activity.filesDir, fileName)
-
-            val inputStream = activity.contentResolver.openInputStream(uri)
-            val boundsOptions = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeStream(inputStream, null, boundsOptions)
-            inputStream?.close()
-
-            var sampleSize = 1
-            val maxDimension = 1200
-            val maxOut = maxOf(boundsOptions.outWidth, boundsOptions.outHeight)
-            while (maxOut / sampleSize > maxDimension) {
-                sampleSize *= 2
-            }
-
-            val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
-            val secondStream = activity.contentResolver.openInputStream(uri)
-            val bitmap = BitmapFactory.decodeStream(secondStream, null, decodeOptions)
-            secondStream?.close()
-
-            if (bitmap != null) {
-                FileOutputStream(file).use { out ->
-                    bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 85, out)
-                }
-                bitmap.recycle()
-                file.absolutePath
-            } else {
-                activity.contentResolver.openInputStream(uri)?.use { input ->
-                    FileOutputStream(file).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                file.absolutePath
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
+        return com.example.foodhub.utils.ImageUtils.saveUriToInternalStorage(activity, uri, "food")
     }
 }

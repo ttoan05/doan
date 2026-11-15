@@ -6,7 +6,7 @@ import com.example.foodhub.data.model.User
 /**
  * Lưu thông tin cá nhân của người dùng đang đăng nhập trong bộ nhớ (dùng chung cho toàn app).
  */
-object UserProfileManager {
+object   UserProfileManager {
 
     var currentUserId: Long = 1L
         private set

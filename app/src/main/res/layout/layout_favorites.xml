@@ -180,7 +180,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="8dp"
-            android:text="🛒 Thêm tất cả vào giỏ"
+            android:text=" Thêm tất cả vào giỏ"
             android:textSize="13sp"
             android:textStyle="bold"
             android:textColor="@color/red_primary"

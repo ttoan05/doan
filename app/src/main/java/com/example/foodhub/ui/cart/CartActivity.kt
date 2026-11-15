@@ -35,10 +35,16 @@ class CartActivity : AppCompatActivity() {
             onChanged = { refresh() },
             onSelectSize = { item -> showSelectSizeDialog(item, fromCheckoutClick = false) }
         )
-        findViewById<RecyclerView>(R.id.rvCart).apply {
-            layoutManager = LinearLayoutManager(this@CartActivity)
-            adapter = this@CartActivity.adapter
-        }
+        val rvCart = findViewById<RecyclerView>(R.id.rvCart)
+        rvCart.layoutManager = LinearLayoutManager(this@CartActivity)
+        rvCart.adapter = this@CartActivity.adapter
+        rvCart.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                    adapter.closeAllOpenItems()
+                }
+            }
+        })
 
         findViewById<Button>(R.id.btnCheckout).setOnClickListener {
             val unselectedItem = CartManager.getItems().find { !FoodSizeHelper.hasSize(it) }
@@ -55,6 +61,9 @@ class CartActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         CartManager.ensureLoaded(this)
+        if (::adapter.isInitialized) {
+            adapter.closeAllOpenItems()
+        }
         refresh()
     }
 

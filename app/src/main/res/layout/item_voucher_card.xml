@@ -38,7 +38,27 @@
                 android:layout_height="wrap_content"
                 android:text="Giảm 30% đơn đầu tiên"
                 android:textColor="#1F2937"
-                android:textSize="15.5sp"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvDiscount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="Giảm 30.000đ"
+                android:textColor="#E63946"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvCondition"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Đơn tối thiểu: 0đ"
+                android:textColor="#D97706"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -46,9 +66,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="Áp dụng cho đơn hàng đầu tiên. Giảm tối đa 50.000đ."
+                android:text="Áp dụng cho đơn hàng đầu tiên."
                 android:textColor="#6B7280"
-                android:textSize="12.5sp"
+                android:textSize="12sp"
                 android:lineSpacingExtra="2dp" />
         </LinearLayout>
     </LinearLayout>

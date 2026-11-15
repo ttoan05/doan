@@ -33,6 +33,8 @@ import com.example.foodhub.ui.auth.LoginActivity
 import com.example.foodhub.ui.home.MainActivity
 import com.example.foodhub.ui.settings.SettingsActivity
 import com.example.foodhub.ui.voucher.VoucherActivity
+import com.example.foodhub.ui.admin.AdminVoucherActivity
+
 
 class AccountActivity : AppCompatActivity() {
 
@@ -81,8 +83,14 @@ class AccountActivity : AppCompatActivity() {
             startActivity(Intent(this, AdminRevenueActivity::class.java))
         }
 
+        // Quản lý người dùng
         findViewById<View>(R.id.btnAdminUsers)?.setOnClickListener {
             startActivity(Intent(this, AdminCustomerActivity::class.java))
+        }
+
+        // Quản lý Voucher
+        findViewById<View>(R.id.btnAdminVouchers)?.setOnClickListener {
+            startActivity(Intent(this, AdminVoucherActivity::class.java))
         }
 
         // ==========================================

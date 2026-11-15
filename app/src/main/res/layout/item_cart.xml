@@ -1,141 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<com.example.foodhub.ui.cart.SwipeRevealLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
+    android:layout_marginBottom="10dp"
     android:background="@drawable/bg_card"
-    android:padding="12dp"
-    android:layout_marginBottom="10dp">
+    android:clipToOutline="true">
 
-    <!-- Food Image Container (Always 64dp x 64dp with rounded corners) -->
-    <androidx.cardview.widget.CardView
-        android:layout_width="64dp"
-        android:layout_height="64dp"
-        app:cardCornerRadius="10dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="#F8FAFC">
-
-        <ImageView
-            android:id="@+id/ivCartImage"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:scaleType="centerCrop"
-            android:contentDescription="Hình món ăn"/>
-
-        <TextView
-            android:id="@+id/tvCartEmoji"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:textSize="30sp"
-            android:visibility="gone"/>
-
-    </androidx.cardview.widget.CardView>
-
+    <!-- 1. MAIN CONTENT (Child 0 - slides left on swipe) -->
     <LinearLayout
-        android:layout_width="0dp"
+        android:id="@+id/llMainContent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="12dp"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF"
+        android:padding="12dp">
 
-        <TextView
-            android:id="@+id/tvCartName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_dark"
-            android:singleLine="true"
-            android:ellipsize="end"/>
+        <!-- Food Image Container (Always 64dp x 64dp with rounded corners) -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            app:cardCornerRadius="10dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#F8FAFC">
 
-        <TextView
-            android:id="@+id/tvCartRestaurant"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="12sp"
-            android:textColor="@color/text_grey"
-            android:singleLine="true"
-            android:ellipsize="end"/>
+            <ImageView
+                android:id="@+id/ivCartImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="Hình món ăn"/>
 
-        <!-- Styled size button / badge -->
-        <TextView
-            android:id="@+id/tvCartNote"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:layout_marginBottom="2dp"
-            android:textSize="11sp"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:background="@drawable/bg_cart_size_missing"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone"/>
+            <TextView
+                android:id="@+id/tvCartEmoji"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:textSize="30sp"
+                android:visibility="gone"/>
 
-        <TextView
-            android:id="@+id/tvCartPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textColor="@color/red_primary"/>
+        </androidx.cardview.widget.CardView>
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:layout_marginStart="12dp"
+            android:orientation="vertical">
 
             <TextView
-                android:id="@+id/btnMinus"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:gravity="center"
-                android:text="−"
-                android:textSize="16sp"
-                android:textColor="@color/text_dark"
-                android:background="@drawable/bg_qty_btn"
-                android:clickable="true"
-                android:focusable="true"/>
-
-            <TextView
-                android:id="@+id/tvCartQty"
-                android:layout_width="36dp"
+                android:id="@+id/tvCartName"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                android:textColor="@color/text_dark"/>
+                android:textColor="@color/text_dark"
+                android:singleLine="true"
+                android:ellipsize="end"/>
 
             <TextView
-                android:id="@+id/btnPlus"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:gravity="center"
-                android:text="+"
-                android:textSize="16sp"
-                android:textColor="@color/text_dark"
-                android:background="@drawable/bg_qty_btn"
+                android:id="@+id/tvCartRestaurant"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="@color/text_grey"
+                android:singleLine="true"
+                android:ellipsize="end"/>
+
+            <!-- Styled size button / badge -->
+            <TextView
+                android:id="@+id/tvCartNote"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="2dp"
+                android:textSize="11sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:background="@drawable/bg_cart_size_missing"
                 android:clickable="true"
-                android:focusable="true"/>
+                android:focusable="true"
+                android:visibility="gone"/>
+
+            <TextView
+                android:id="@+id/tvCartPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/red_primary"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/btnMinus"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:gravity="center"
+                    android:text="−"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_dark"
+                    android:background="@drawable/bg_qty_btn"
+                    android:clickable="true"
+                    android:focusable="true"/>
+
+                <TextView
+                    android:id="@+id/tvCartQty"
+                    android:layout_width="36dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_dark"/>
+
+                <TextView
+                    android:id="@+id/btnPlus"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:gravity="center"
+                    android:text="+"
+                    android:textSize="16sp"
+                    android:textColor="@color/text_dark"
+                    android:background="@drawable/bg_qty_btn"
+                    android:clickable="true"
+                    android:focusable="true"/>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/btnRemove"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:gravity="center"
-        android:text="🗑️"
-        android:textSize="20sp"
-        android:clickable="true"
-        android:focusable="true"/>
-</LinearLayout>
+    <!-- 2. ACTION MENU (Child 1 - revealed on swipe from right) -->
+    <LinearLayout
+        android:id="@+id/llActionMenu"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="horizontal">
+
+        <!-- Red: Xóa -->
+        <TextView
+            android:id="@+id/btnDelete"
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:background="#EE4D2D"
+            android:gravity="center"
+            android:text="Xóa"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </LinearLayout>
+
+</com.example.foodhub.ui.cart.SwipeRevealLayout>

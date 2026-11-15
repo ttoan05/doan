@@ -7,12 +7,16 @@ import android.content.Intent
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -26,9 +30,7 @@ import com.example.foodhub.ui.voucher.VoucherActivity
 import com.example.foodhub.utils.SampleData
 
 /**
- * Tách riêng toàn bộ phần render và logic của Tab Trang chủ (Home Content)
- * Bao gồm Header, Giỏ hàng, Search bar, Gợi ý tìm kiếm, Banner khuyến mãi, Danh mục,
- * Bộ lọc & Sắp xếp đa tiêu chí nâng cao, và Danh sách món ăn / nhà hàng.
+ * Hiển thị toàn bộ giao diện và điều khiển logic Tab Trang chủ (Home Content).
  */
 object MainActivityHomeView {
 
@@ -36,16 +38,16 @@ object MainActivityHomeView {
         val container = activity.contentContainer
         container.removeAllViews()
 
-        // ── 1. Header (Tiêu đề + Giỏ hàng) ───────────────────────────────────
+        // ── 1. Top Header ─────────────────────────────────────────
         val header = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
-            setBackgroundColor(Color.WHITE)
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(activity.dp(16), activity.dp(16), activity.dp(16), activity.dp(12))
+            setPadding(activity.dp(16), activity.dp(8), activity.dp(16), activity.dp(4))
         }
+
         val tvTitle = TextView(activity).apply {
             text = "FoodHub"
-            textSize = 20f
+            textSize = 24f
             setTextColor(activity.getColor(R.color.red_primary))
             setTypeface(null, Typeface.BOLD)
             layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
@@ -90,7 +92,7 @@ object MainActivityHomeView {
         header.addView(cartContainer)
         container.addView(header)
 
-        // ── 2. Dữ liệu nguồn & Trạng thái bộ lọc ─────────────────────────────
+        // ── 2. Dữ liệu nguồn & Trạng thái bộ lọc ────────────────────
         val allFoods = DatabaseHelper.getInstance(activity).getAllFoods().ifEmpty { SampleData.FOODS }
         val allRestaurants = DatabaseHelper.getInstance(activity).getAllRestaurants().ifEmpty { SampleData.RESTAURANTS }
         val filterState = HomeFilterState()
@@ -122,8 +124,8 @@ object MainActivityHomeView {
         var updateCatButtonsUi: (() -> Unit)? = null
 
         fun applyAllFilters() {
-            val filteredFoods = HomeFilterSortHelper.filterAndSortFoods(allFoods, allRestaurants, filterState)
-            val filteredRestaurants = HomeFilterSortHelper.filterAndSortRestaurants(allRestaurants, filterState)
+            val filteredFoods = HomeFilterSortHelper.filterAndSortFoods(activity, allFoods, allRestaurants, filterState)
+            val filteredRestaurants = HomeFilterSortHelper.filterAndSortRestaurants(activity, allRestaurants, filterState)
 
             foodAdapter?.submit(filteredFoods)
             restaurantAdapter?.submit(filteredRestaurants)
@@ -140,7 +142,7 @@ object MainActivityHomeView {
             tvSearchEmpty.visibility = if (noResult) View.VISIBLE else View.GONE
         }
 
-        // ── 3. Ô tìm kiếm ───────────────────────────────────────────────────
+        // ── 3. Ô tìm kiếm ─────────────────────────────────────────
         val searchLayout = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -178,7 +180,7 @@ object MainActivityHomeView {
         searchLayout.addView(btnClearSearch)
         container.addView(searchLayout)
 
-        // ── 4. Suggestion View (Lịch sử tìm kiếm & Từ khóa Hot) ──────────────
+        // ── 4. Suggestion View (Lịch sử tìm kiếm & Từ khóa Hot) ────────
         val suggestionView = activity.layoutInflater.inflate(R.layout.layout_search_suggestions, null)
         val llRecentHeader = suggestionView.findViewById<LinearLayout>(R.id.llRecentHeader)
         val hsvRecent = suggestionView.findViewById<HorizontalScrollView>(R.id.hsvRecentSearches)
@@ -318,31 +320,24 @@ object MainActivityHomeView {
             applyAllFilters()
         }
 
-        etSearch.setOnFocusChangeListener { _, hasFocus ->
-            if (hasFocus || etSearch.text.isNotEmpty()) {
-                refreshRecentTags()
-                suggestionView.visibility = View.VISIBLE
-            }
-        }
-
-        etSearch.setOnClickListener {
-            refreshRecentTags()
-            suggestionView.visibility = View.VISIBLE
-        }
-
         btnClearSearch.setOnClickListener {
             etSearch.setText("")
-            filterState.searchQuery = ""
-            applyAllFilters()
+            btnClearSearch.visibility = View.GONE
+            onSearchQueryChanged("")
         }
 
-        etSearch.addTextChangedListener(object : TextWatcher {
+        etSearch.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                onSearchQueryChanged(s?.toString().orEmpty())
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                onSearchQueryChanged(s?.toString()?.trim() ?: "")
             }
+            override fun afterTextChanged(s: android.text.Editable?) {}
         })
+
+        etSearch.setOnFocusChangeListener { _, hasFocus ->
+            suggestionView.visibility = if (hasFocus) View.VISIBLE else View.GONE
+            if (hasFocus) refreshRecentTags()
+        }
 
         etSearch.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -353,46 +348,53 @@ object MainActivityHomeView {
                 }
                 val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
                 imm.hideSoftInputFromWindow(etSearch.windowToken, 0)
+                etSearch.clearFocus()
                 true
             } else {
                 false
             }
         }
 
-        // ── 5. Promo Banner ──────────────────────────────────────────────────
+        // ── 5. Promo Banner (Voucher Chào mừng) ─────────────────────
         if (!VoucherStore.isWelcomeBannerDismissed(activity)) {
             val promoBanner = LinearLayout(activity).apply {
                 orientation = LinearLayout.HORIZONTAL
-                setBackgroundResource(R.drawable.bg_promo)
                 gravity = Gravity.CENTER_VERTICAL
+                setBackgroundResource(R.drawable.bg_promo)
+                setPadding(activity.dp(16), activity.dp(14), activity.dp(16), activity.dp(14))
                 val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 lp.setMargins(activity.dp(16), 0, activity.dp(16), activity.dp(16))
                 layoutParams = lp
-                setPadding(activity.dp(14), activity.dp(12), activity.dp(14), activity.dp(12))
             }
+
             val promoText = LinearLayout(activity).apply {
                 orientation = LinearLayout.VERTICAL
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                val lp = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+                layoutParams = lp
+                val t1 = TextView(activity).apply {
+                    text = "🎉 Giảm 30% cho đơn đầu tiên"
+                    textSize = 14f
+                    setTextColor(Color.parseColor("#E11D48"))
+                    setTypeface(null, Typeface.BOLD)
+                }
+                val t2 = TextView(activity).apply {
+                    text = "Nhập mã: FIRST30"
+                    textSize = 12.5f
+                    setTextColor(Color.parseColor("#E11D48"))
+                    setPadding(0, activity.dp(3), 0, 0)
+                }
+                addView(t1)
+                addView(t2)
             }
-            val promoTitle = TextView(activity).apply {
-                text = "🎉 Giảm 30% cho đơn đầu tiên"
-                textSize = 13f
-                setTypeface(null, Typeface.BOLD)
-                setTextColor(activity.getColor(R.color.red_primary))
-            }
-            val promoSub = TextView(activity).apply {
-                text = "Nhập mã: FIRST30"
-                textSize = 12f
-                setTextColor(activity.getColor(R.color.red_primary))
-            }
-            promoText.addView(promoTitle)
-            promoText.addView(promoSub)
-            val promoBtn = Button(activity).apply {
+
+            val promoBtn = TextView(activity).apply {
                 text = "DÙNG NGAY"
                 textSize = 13f
                 setTextColor(Color.WHITE)
                 setTypeface(null, Typeface.BOLD)
+                gravity = Gravity.CENTER
                 setBackgroundResource(R.drawable.bg_btn_red)
+                setPadding(activity.dp(18), activity.dp(10), activity.dp(18), activity.dp(10))
                 setOnClickListener {
                     VoucherStore.markWelcomeBannerDismissed(activity)
                     try {
@@ -413,7 +415,7 @@ object MainActivityHomeView {
             container.addView(promoBanner)
         }
 
-        // ── 6. Categories (Danh mục ẩm thực) ─────────────────────────────────
+        // ── 6. Categories (Danh mục ẩm thực) ──────────────────────
         val catScroll = HorizontalScrollView(activity).apply {
             isHorizontalScrollBarEnabled = false
             val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -458,7 +460,7 @@ object MainActivityHomeView {
         catScroll.addView(catRow)
         container.addView(catScroll)
 
-        // ── 7. BỘ LỌC & SẮP XẾP NÂNG CAO (Advanced Filter & Sort Bar) ───────────
+        // ── 7. BỘ LỌC & SẮP XẾP NÂNG CAO (Advanced Filter & Sort Bar) ───
         val filterSortScroll = HorizontalScrollView(activity).apply {
             isHorizontalScrollBarEnabled = false
             val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -501,9 +503,12 @@ object MainActivityHomeView {
             val sortVal: HomeSortOption? = null
         )
 
+        // Thanh trượt lọc: Đặt 2 mục cá nhân hóa ngay sau "Bán chạy" và "Đánh giá cao"
         val homeChips = listOf(
             HomeChipDef("bestseller", "🔥 Bán chạy", true, HomeSortOption.BEST_SELLER),
             HomeChipDef("rating", "⭐ Đánh giá cao", true, HomeSortOption.RATING),
+            HomeChipDef("order_history", "🔄 Thường gọi", true, HomeSortOption.ORDER_HISTORY),
+            HomeChipDef("favorite_restaurant", "🏠 Quán quen", true, HomeSortOption.FAVORITE_RESTAURANT),
             HomeChipDef("price_asc", "Giá: Thấp → Cao", true, HomeSortOption.PRICE_ASC),
             HomeChipDef("price_desc", "Giá: Cao → Thấp", true, HomeSortOption.PRICE_DESC),
             HomeChipDef("nearby", "📍 Gần nhất", true, HomeSortOption.NEARBY),
@@ -577,7 +582,7 @@ object MainActivityHomeView {
         container.addView(filterSortScroll)
         container.addView(tvFilterSummary)
 
-        // ── 8. Section: Món ngon đề xuất ─────────────────────────────────────
+        // ── 8. Section: Món ngon đề xuất ───────────────────────────
         activity.addSectionHeader("Món ngon đề xuất", "Xem tất cả") { activity.showToast("Xem tất cả món") }
         val foodRecycler = RecyclerView(activity).apply {
             layoutManager = GridLayoutManager(activity, 2)
@@ -595,25 +600,25 @@ object MainActivityHomeView {
         }
         container.addView(foodRecycler)
 
-        // ── 9. Section: Nhà hàng nổi bật ─────────────────────────────────────
+        // ── 9. Section: Nhà hàng nổi bật ───────────────────────────
         activity.addSectionHeader("Nhà hàng nổi bật", "Xem thêm") { activity.showToast("Xem thêm nhà hàng") }
         val restaurantRecycler = RecyclerView(activity).apply {
-            layoutManager = LinearLayoutManager(activity)
+            layoutManager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             adapter = RestaurantAdapter(
                 initialRestaurants = allRestaurants,
                 onFavoriteChanged = { r, isFav, oldTime -> activity.onRestaurantHeartChanged(r, isFav, oldTime) },
-                onViewMenu = { r -> activity.openRestaurantDetail(r) }
+                onViewMenu = { res -> activity.openRestaurantDetail(res) }
             ).also { restaurantAdapter = it; activity.homeRestaurantAdapter = it }
+
             isNestedScrollingEnabled = false
             val lp = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-            lp.setMargins(activity.dp(16), 0, activity.dp(16), activity.dp(16))
+            lp.setMargins(activity.dp(16), 0, activity.dp(16), activity.dp(24))
             layoutParams = lp
         }
         container.addView(restaurantRecycler)
         container.addView(tvSearchEmpty)
 
-        // Kích hoạt hiển thị ban đầu
-        updateAllFilterChipsUi.invoke()
+        updateAllFilterChipsUi?.invoke()
         applyAllFilters()
     }
 }

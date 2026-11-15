@@ -91,18 +91,59 @@ class VoucherActivity : AppCompatActivity() {
         tvSubtitle?.visibility = View.VISIBLE
 
         val inflater = LayoutInflater.from(this)
+        val dateFormat = java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale("vi", "VN"))
+
         availableVouchers.forEach { voucher ->
             val itemView = inflater.inflate(R.layout.item_voucher_card, container, false)
 
             val tvIcon = itemView.findViewById<TextView>(R.id.tvIcon)
             val tvTitle = itemView.findViewById<TextView>(R.id.tvTitle)
+            val tvDiscount = itemView.findViewById<TextView>(R.id.tvDiscount)
+            val tvCondition = itemView.findViewById<TextView>(R.id.tvCondition)
             val tvDesc = itemView.findViewById<TextView>(R.id.tvDesc)
             val tvCode = itemView.findViewById<TextView>(R.id.tvCode)
             val btnCopy = itemView.findViewById<Button>(R.id.btnCopy)
 
             tvIcon.text = voucher.emoji
             tvTitle.text = voucher.title
-            tvDesc.text = voucher.desc
+
+            // Hiển thị mức giảm giá nổi bật
+            val discountText = when (voucher.type) {
+                com.example.foodhub.data.model.VoucherType.PERCENT -> {
+                    if (voucher.maxDiscount > 0) {
+                        "Giảm ${voucher.value}% (Tối đa ${com.example.foodhub.utils.FormatUtils.money(voucher.maxDiscount)})"
+                    } else {
+                        "Giảm ${voucher.value}%"
+                    }
+                }
+                com.example.foodhub.data.model.VoucherType.AMOUNT -> {
+                    "Giảm ${com.example.foodhub.utils.FormatUtils.money(voucher.value)}"
+                }
+                com.example.foodhub.data.model.VoucherType.FREESHIP -> {
+                    "Miễn phí vận chuyển (Freeship)"
+                }
+            }
+            tvDiscount.text = discountText
+
+            // Hiển thị điều kiện đơn tối thiểu & hạn dùng
+            val condParts = mutableListOf<String>()
+            if (voucher.minOrder > 0) {
+                condParts.add("Đơn tối thiểu: ${com.example.foodhub.utils.FormatUtils.money(voucher.minOrder)}")
+            } else {
+                condParts.add("Đơn tối thiểu: 0đ")
+            }
+            if (voucher.endAt > 0L) {
+                condParts.add("HSD: ${dateFormat.format(java.util.Date(voucher.endAt))}")
+            }
+            tvCondition.text = condParts.joinToString(" • ")
+
+            if (voucher.desc.isNotBlank()) {
+                tvDesc.visibility = View.VISIBLE
+                tvDesc.text = voucher.desc
+            } else {
+                tvDesc.visibility = View.GONE
+            }
+
             tvCode.text = voucher.code
 
             btnCopy.text = "Sao chép"

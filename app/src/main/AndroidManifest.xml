@@ -49,6 +49,9 @@
             android:windowSoftInputMode="adjustResize"/>
         <activity android:name=".ui.admin.AdminCustomerActivity"
             android:windowSoftInputMode="adjustResize"/>
+        <activity
+            android:name=".ui.admin.AdminVoucherActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

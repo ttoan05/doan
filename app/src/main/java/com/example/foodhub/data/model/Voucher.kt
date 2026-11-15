@@ -1,3 +1,4 @@
+
 package com.example.foodhub.data.model
 
 /** Loại giảm giá của voucher. */
@@ -12,25 +13,32 @@ enum class VoucherType {
     FREESHIP
 }
 
-/** Voucher khuyến mãi dùng offline (demo), lưu trong code mẫu. */
+/** Voucher khuyến mãi dùng chung cho Admin và người dùng. */
 data class Voucher(
     val code: String,
     val title: String,
     val desc: String,
     val type: VoucherType,
-    /** PERCENT: % giảm (vd 30). AMOUNT: số tiền giảm. FREESHIP: bỏ qua. */
+    /** PERCENT: % giảm. AMOUNT: số tiền giảm. FREESHIP: bỏ qua. */
     val value: Int = 0,
-    /** Mức giảm tối đa (đồng) khi type = PERCENT. 0 = không giới hạn. */
+    /** Mức giảm tối đa khi type = PERCENT. */
     val maxDiscount: Int = 0,
-    /** Giá trị đơn tối thiểu (tạm tính, đồng) để được áp dụng. */
+    /** Giá trị đơn tối thiểu để được áp dụng. */
     val minOrder: Int = 0,
-    val emoji: String = "🎟️"
+    val emoji: String = "🎟️",
+
+    // Thông tin bổ sung phục vụ quản lý voucher Admin
+    val id: Int = 0,
+    val quantity: Int = 0,
+    val remainingQuantity: Int = 0,
+    val startAt: Long = 0L,
+    val endAt: Long = 0L,
+    val isActive: Boolean = true
 )
 
 /** Kết quả khi người dùng nhập mã voucher ở Checkout. */
 data class VoucherResult(
     val success: Boolean,
-    /** Số tiền được giảm trên toàn giỏ (đồng). */
     val discount: Int = 0,
     val message: String = "",
     val voucher: Voucher? = null

@@ -28,7 +28,8 @@ class DatabaseHelper private constructor(context: Context) :
     AddressReviewDao,
     CategoryDao,
     FoodDao,
-    RestaurantDao {
+    RestaurantDao,
+    VoucherDao{
 
     override val dbReadable: SQLiteDatabase
         get() = readableDatabase
@@ -38,7 +39,7 @@ class DatabaseHelper private constructor(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "foodhub_app.db"
-        private const val DATABASE_VERSION = 16
+        private const val DATABASE_VERSION = 19
 
         // Bảng users
         const val TABLE_USERS = "users"
@@ -173,6 +174,12 @@ class DatabaseHelper private constructor(context: Context) :
         const val COL_REST_IMAGE_RES = "image_res"
         const val COL_REST_IMAGE_URI = "image_uri"
 
+        // Bảng vouchers (Voucher khuyến mãi do Admin quản lý)
+        const val TABLE_VOUCHERS = "vouchers"
+
+        // Bảng voucher_usage (Theo dõi voucher đã dùng theo tài khoản)
+        const val TABLE_VOUCHER_USAGE = "voucher_usage"
+
         @Volatile
         private var instance: DatabaseHelper? = null
 
@@ -194,6 +201,10 @@ class DatabaseHelper private constructor(context: Context) :
         db.execSQL(createCategoriesTable())
         db.execSQL(createFoodsTable())
         db.execSQL(createRestaurantsTable())
+        // Tạo bảng voucher
+        db.execSQL(createVouchersTable())
+        db.execSQL(createVoucherUsageTable())
+
 
         // Tài khoản mẫu mặc định
         val defaultUser = ContentValues().apply {
@@ -224,6 +235,7 @@ class DatabaseHelper private constructor(context: Context) :
         seedInitialCategories(db)
         seedInitialFoods(db)
         seedInitialRestaurants(db)
+        seedInitialVouchers(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -239,6 +251,10 @@ class DatabaseHelper private constructor(context: Context) :
             db.execSQL(createCategoriesTable())
             db.execSQL(createFoodsTable())
             db.execSQL(createRestaurantsTable())
+            db.execSQL(createVouchersTable())
+            db.execSQL(createVoucherUsageTable())
+            seedInitialVouchers(db)
+
 
             // Thêm các cột nếu phiên bản cũ chưa có
             addColumnIfMissing(db, TABLE_USERS, COL_ROLE, "TEXT DEFAULT 'user'")
@@ -306,6 +322,7 @@ class DatabaseHelper private constructor(context: Context) :
         super.onOpen(db)
         try {
             ensureUsersTable(db)
+            seedInitialVouchers(db)
         } catch (_: Throwable) {}
     }
 
@@ -470,6 +487,35 @@ class DatabaseHelper private constructor(context: Context) :
             $COL_REST_IMAGE_URI TEXT DEFAULT ''
         )
     """.trimIndent()
+
+    fun createVouchersTable(): String = """
+    CREATE TABLE IF NOT EXISTS $TABLE_VOUCHERS (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        type TEXT NOT NULL,
+        value INTEGER DEFAULT 0,
+        max_discount INTEGER DEFAULT 0,
+        min_order INTEGER DEFAULT 0,
+        emoji TEXT DEFAULT '🎟️',
+        quantity INTEGER DEFAULT 0,
+        remaining_quantity INTEGER DEFAULT 0,
+        start_at INTEGER DEFAULT 0,
+        end_at INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1
+    )
+""".trimIndent()
+
+    fun createVoucherUsageTable(): String = """
+    CREATE TABLE IF NOT EXISTS $TABLE_VOUCHER_USAGE (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        voucher_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        used_at INTEGER NOT NULL,
+        UNIQUE(voucher_id, user_id)
+    )
+""".trimIndent()
 
     fun seedInitialCategories(db: SQLiteDatabase) {
         val countCursor = db.rawQuery("SELECT COUNT(*) FROM $TABLE_CATEGORIES", null)
@@ -645,6 +691,84 @@ class DatabaseHelper private constructor(context: Context) :
             cursor.close()
             if (!exists) {
                 db.execSQL("ALTER TABLE $table ADD COLUMN $column $definition")
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun ensureVouchersTable(db: SQLiteDatabase) {
+        db.execSQL(createVouchersTable())
+        db.execSQL(createVoucherUsageTable())
+    }
+
+    override fun seedInitialVouchers(db: SQLiteDatabase) {
+        try {
+            ensureVouchersTable(db)
+            val defaultVouchers = listOf(
+                ContentValues().apply {
+                    put("code", "FIRST30")
+                    put("title", "Giảm 30k đơn đầu tiên")
+                    put("description", "Áp dụng cho đơn hàng đầu tiên. Giảm ngay 30.000đ.")
+                    put("type", "AMOUNT")
+                    put("value", 30000)
+                    put("max_discount", 30000)
+                    put("min_order", 0)
+                    put("emoji", "🎉")
+                    put("quantity", 9999)
+                    put("remaining_quantity", 9999)
+                    put("start_at", 0L)
+                    put("end_at", 0L)
+                    put("is_active", 1)
+                },
+                ContentValues().apply {
+                    put("code", "FREESHIP")
+                    put("title", "Miễn phí vận chuyển")
+                    put("description", "Miễn phí ship cho đơn từ 30.000đ trở lên.")
+                    put("type", "FREESHIP")
+                    put("value", 0)
+                    put("max_discount", 0)
+                    put("min_order", 30000)
+                    put("emoji", "🚚")
+                    put("quantity", 9999)
+                    put("remaining_quantity", 9999)
+                    put("start_at", 0L)
+                    put("end_at", 0L)
+                    put("is_active", 1)
+                },
+                ContentValues().apply {
+                    put("code", "SAVE20")
+                    put("title", "Giảm 20% tất cả món")
+                    put("description", "Giảm 20% toàn bộ món trong menu. Tối đa 30.000đ. Đơn từ 50.000đ")
+                    put("type", "PERCENT")
+                    put("value", 20)
+                    put("max_discount", 30000)
+                    put("min_order", 50000)
+                    put("emoji", "💰")
+                    put("quantity", 9999)
+                    put("remaining_quantity", 9999)
+                    put("start_at", 0L)
+                    put("end_at", 0L)
+                    put("is_active", 1)
+                },
+                ContentValues().apply {
+                    put("code", "WEEKEND")
+                    put("title", "Ưu đãi cuối tuần 15%")
+                    put("description", "Ưu đãi giảm 15% cho ngày cuối tuần. Tối đa 25.000đ. Đơn từ 40.000đ")
+                    put("type", "PERCENT")
+                    put("value", 15)
+                    put("max_discount", 25000)
+                    put("min_order", 40000)
+                    put("emoji", "⭐")
+                    put("quantity", 9999)
+                    put("remaining_quantity", 9999)
+                    put("start_at", 0L)
+                    put("end_at", 0L)
+                    put("is_active", 1)
+                }
+            )
+            defaultVouchers.forEach { cv ->
+                db.insertWithOnConflict(TABLE_VOUCHERS, null, cv, SQLiteDatabase.CONFLICT_IGNORE)
             }
         } catch (e: Exception) {
             e.printStackTrace()

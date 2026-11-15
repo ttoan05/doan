@@ -65,7 +65,15 @@ interface OrderDao : BaseDao {
                         put(DatabaseHelper.COL_OI_IMAGE_URI, finalImageUri)
                         put(DatabaseHelper.COL_OI_NOTE, item.note)
                     }
-                    db.insert(DatabaseHelper.TABLE_ORDER_ITEMS, null, itemValues)
+                    val itemResult = db.insert(
+                        DatabaseHelper.TABLE_ORDER_ITEMS,
+                        null,
+                        itemValues
+                    )
+
+                    if (itemResult == -1L) {
+                        return false
+                    }
                 }
 
                 db.setTransactionSuccessful()

@@ -22,6 +22,7 @@ import com.example.foodhub.data.UserProfileManager
 import com.example.foodhub.data.VoucherStore
 import com.example.foodhub.data.model.SavedAddress
 import com.example.foodhub.data.model.Voucher
+import com.example.foodhub.data.model.VoucherType
 import com.example.foodhub.ui.home.MainActivity
 import com.example.foodhub.ui.order.OrderUi
 import com.example.foodhub.utils.FormatUtils
@@ -210,23 +211,45 @@ class CheckoutActivity : AppCompatActivity() {
             .show()
     }
 
+
     private fun showPickVoucherDialog() {
-        val vouchers = VoucherStore.VOUCHERS
-        val items = vouchers.map { v ->
-            val usedTag = if (VoucherStore.isUsed(this, v.code)) " [Đã dùng]" else ""
-            "${v.emoji} ${v.code}$usedTag: ${v.title}\n   ${v.desc}"
+        // Lấy voucher khả dụng từ SQLite theo tài khoản hiện tại
+        val vouchers = VoucherStore.getAvailableVouchers(this)
+
+        if (vouchers.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Chọn mã giảm giá")
+                .setMessage("Hiện tại bạn chưa có voucher nào khả dụng.")
+                .setPositiveButton("Đóng", null)
+                .show()
+            return
+        }
+
+        val items = vouchers.map { voucher ->
+            val discountInfo = when (voucher.type) {
+                VoucherType.PERCENT -> {
+                    if (voucher.maxDiscount > 0) "Giảm ${voucher.value}% (Tối đa ${FormatUtils.money(voucher.maxDiscount)})"
+                    else "Giảm ${voucher.value}%"
+                }
+                VoucherType.AMOUNT -> "Giảm ${FormatUtils.money(voucher.value)}"
+                VoucherType.FREESHIP -> "Miễn phí vận chuyển"
+            }
+            val minOrderInfo = if (voucher.minOrder > 0) " • Đơn tối thiểu ${FormatUtils.money(voucher.minOrder)}" else ""
+            "${voucher.emoji} [${voucher.code}] $discountInfo$minOrderInfo\n   ${voucher.title}"
         }.toTypedArray()
 
         AlertDialog.Builder(this)
             .setTitle("Chọn mã giảm giá")
             .setItems(items) { _, which ->
                 val selected = vouchers[which]
+
                 etVoucherCode.setText(selected.code)
                 applyVoucherCode(selected.code)
             }
             .setNegativeButton("Đóng", null)
             .show()
     }
+
 
     private fun applyVoucherCode(code: String) {
         if (code.isBlank()) {
@@ -521,6 +544,7 @@ class CheckoutActivity : AppCompatActivity() {
         dialog.show()
     }
 
+
     private fun executeOrderCreation(
         name: String,
         phone: String,
@@ -528,7 +552,44 @@ class CheckoutActivity : AppCompatActivity() {
         orderNote: String,
         method: String
     ) {
-        // Lưu vào sổ địa chỉ nếu chọn checkbox
+        // Kiểm tra giỏ hàng trước khi tạo đơn
+        val cartItems = CartManager.getItems().map { it.copy() }
+
+        if (cartItems.isEmpty()) {
+            Toast.makeText(
+                this,
+                "Giỏ hàng đang trống",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val voucherCode = appliedVoucher?.code ?: etVoucherCode.text.toString().trim()
+
+        // Tạo đơn hàng và lưu vào SQLite
+        val createdOrders = OrderManager.createOrders(
+            cartItems = cartItems,
+            receiverName = name,
+            phone = phone,
+            address = address,
+            paymentMethod = method,
+            orderNote = orderNote,
+            voucherCode = voucherCode,
+            discount = appliedDiscount,
+            context = this
+        )
+
+        // Nếu không lưu được đơn hàng thì dừng tại đây
+        if (createdOrders.isEmpty()) {
+            Toast.makeText(
+                this,
+                "Không thể tạo đơn hàng. Vui lòng thử lại!",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
+        // Chỉ lưu địa chỉ sau khi tạo đơn thành công
         if (cbSaveAddress.isChecked) {
             AddressStore.insert(
                 this,
@@ -542,37 +603,32 @@ class CheckoutActivity : AppCompatActivity() {
             )
         }
 
-        val voucherCode = appliedVoucher?.code ?: ""
-
-        // Tạo đơn hàng thật và lưu vào SQLite
-        OrderManager.createOrders(
-            cartItems = CartManager.getItems().map { it.copy() },
-            receiverName = name,
-            phone = phone,
-            address = address,
-            paymentMethod = method,
-            orderNote = orderNote,
-            voucherCode = voucherCode,
-            discount = appliedDiscount,
-            context = this
-        )
-
-        // Đánh dấu mã đã dùng
+        // Đánh dấu voucher đã sử dụng sau khi lưu đơn thành công
         if (voucherCode.isNotEmpty()) {
             VoucherStore.markUsed(this, voucherCode)
         }
 
-        // Xóa giỏ hàng
+        // Xóa giỏ hàng sau khi tạo đơn thành công
         CartManager.clear()
 
-        Toast.makeText(this, "Đặt hàng thành công 🎉 Cảm ơn bạn!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            "Đặt hàng thành công 🎉 Cảm ơn bạn!",
+            Toast.LENGTH_SHORT
+        ).show()
 
-        val intent = Intent(this, MainActivity::class.java).apply {
+        val intent = Intent(
+            this,
+            MainActivity::class.java
+        ).apply {
             putExtra("selected_tab", "orders")
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+
         startActivity(intent)
         overridePendingTransition(0, 0)
         finish()
     }
+
 }

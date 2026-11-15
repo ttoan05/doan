@@ -12,7 +12,7 @@ import com.example.foodhub.data.FavoriteManager
 import com.example.foodhub.data.model.Food
 import com.example.foodhub.utils.SampleData
 
-class FoodAdapter(
+class  FoodAdapter(
     initialFoods: List<Food>,
     private val onItemClick: ((Food) -> Unit)? = null,
     private val onFavoriteChanged: ((Food, Boolean, Long) -> Unit)? = null,

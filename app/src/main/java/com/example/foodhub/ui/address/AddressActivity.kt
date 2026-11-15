@@ -15,7 +15,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.foodhub.R
 import com.example.foodhub.data.AddressStore
-import com.example.foodhub.data.UserProfileManager
 import com.example.foodhub.data.model.SavedAddress
 
 class AddressActivity : AppCompatActivity() {
@@ -35,6 +34,10 @@ class AddressActivity : AppCompatActivity() {
         }
 
         findViewById<View>(R.id.btnAddTop).setOnClickListener {
+            showEditAddressDialog(null)
+        }
+
+        findViewById<View>(R.id.btnAddEmpty)?.setOnClickListener {
             showEditAddressDialog(null)
         }
 
@@ -116,96 +119,71 @@ class AddressActivity : AppCompatActivity() {
         val btnCancel = dialogView.findViewById<Button>(R.id.btnCancel)
         val btnSave = dialogView.findViewById<Button>(R.id.btnSave)
 
-        val isEditMode = addressToEdit != null
+        if (addressToEdit != null) {
+            tvDialogTitle.text = "Chỉnh sửa địa chỉ"
+            btnSave.text = "Cập nhật"
 
-        if (isEditMode) {
-            tvDialogTitle?.text = "Chỉnh sửa địa chỉ"
-            btnSave.text = "LƯU THAY ĐỔI"
-
-            etAddress.setText(addressToEdit!!.address)
+            etAddress.setText(addressToEdit.address)
             etReceiver.setText(addressToEdit.receiver)
             etPhone.setText(addressToEdit.phone)
             cbIsDefault.isChecked = addressToEdit.isDefault
 
-            when (addressToEdit.label.lowercase()) {
-                "nhà", "nha" -> rbHome.isChecked = true
-                "công ty", "cong ty" -> rbWork.isChecked = true
+            when (addressToEdit.label) {
+                "Nhà riêng", "Nhà" -> rbHome.isChecked = true
+                "Văn phòng", "Công ty" -> rbWork.isChecked = true
                 else -> rbOther.isChecked = true
             }
         } else {
-            tvDialogTitle?.text = "Thêm địa chỉ nhận hàng"
-            btnSave.text = "LƯU ĐỊA CHỈ"
-
-            // Điền sẵn thông tin người dùng nếu có
-            if (UserProfileManager.name.isNotEmpty()) {
-                etReceiver.setText(UserProfileManager.name)
-            }
-            if (UserProfileManager.phone.isNotEmpty()) {
-                etPhone.setText(UserProfileManager.phone)
-            }
+            tvDialogTitle.text = "Thêm địa chỉ mới"
+            btnSave.text = "Lưu địa chỉ"
+            rbHome.isChecked = true
+            cbIsDefault.isChecked = AddressStore.getAll(this).isEmpty()
         }
 
         val dialog = AlertDialog.Builder(this)
             .setView(dialogView)
             .create()
 
-        dialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
-
         btnCancel.setOnClickListener {
             dialog.dismiss()
         }
 
         btnSave.setOnClickListener {
-            val addrText = etAddress.text.toString().trim()
+            val address = etAddress.text.toString().trim()
             val receiver = etReceiver.text.toString().trim()
             val phone = etPhone.text.toString().trim()
 
-            if (addrText.isEmpty()) {
-                etAddress.error = "Vui lòng nhập địa chỉ"
-                etAddress.requestFocus()
-                return@setOnClickListener
-            }
-            if (receiver.isEmpty()) {
-                etReceiver.error = "Vui lòng nhập tên người nhận"
-                etReceiver.requestFocus()
-                return@setOnClickListener
-            }
-            if (phone.isEmpty()) {
-                etPhone.error = "Vui lòng nhập số điện thoại"
-                etPhone.requestFocus()
+            if (address.isEmpty() || receiver.isEmpty() || phone.isEmpty()) {
+                Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             val label = when {
-                rbHome.isChecked -> "Nhà"
-                rbWork.isChecked -> "Công ty"
+                rbHome.isChecked -> "Nhà riêng"
+                rbWork.isChecked -> "Văn phòng"
                 else -> "Khác"
             }
 
-            if (isEditMode) {
-                val updated = addressToEdit!!.copy(
+            if (addressToEdit != null) {
+                val updated = addressToEdit.copy(
                     label = label,
+                    address = address,
                     receiver = receiver,
                     phone = phone,
-                    address = addrText,
                     isDefault = cbIsDefault.isChecked
                 )
                 AddressStore.update(this, updated)
-                if (cbIsDefault.isChecked) {
-                    AddressStore.setDefault(this, updated.id)
-                }
-                Toast.makeText(this, "Đã cập nhật địa chỉ thành công!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Đã cập nhật địa chỉ", Toast.LENGTH_SHORT).show()
             } else {
-                val newAddress = SavedAddress(
-                    id = 0L,
+                val newAddr = SavedAddress(
                     label = label,
+                    address = address,
                     receiver = receiver,
                     phone = phone,
-                    address = addrText,
                     isDefault = cbIsDefault.isChecked
                 )
-                AddressStore.insert(this, newAddress)
-                Toast.makeText(this, "Đã thêm địa chỉ thành công!", Toast.LENGTH_SHORT).show()
+                AddressStore.insert(this, newAddr)
+                Toast.makeText(this, "Đã lưu địa chỉ", Toast.LENGTH_SHORT).show()
             }
 
             dialog.dismiss()

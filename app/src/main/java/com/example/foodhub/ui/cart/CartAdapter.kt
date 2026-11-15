@@ -20,7 +20,15 @@ class CartAdapter(
     private val onSelectSize: (CartItem) -> Unit
 ) : RecyclerView.Adapter<CartAdapter.CartViewHolder>() {
 
+    private var openedSwipeLayout: SwipeRevealLayout? = null
+
+    fun closeAllOpenItems() {
+        openedSwipeLayout?.close(smooth = true)
+        openedSwipeLayout = null
+    }
+
     class CartViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val swipeLayout: SwipeRevealLayout = itemView.findViewById(R.id.swipeLayout)
         val ivImage: ImageView = itemView.findViewById(R.id.ivCartImage)
         val tvEmoji: TextView = itemView.findViewById(R.id.tvCartEmoji)
         val tvName: TextView = itemView.findViewById(R.id.tvCartName)
@@ -29,7 +37,7 @@ class CartAdapter(
         val tvQuantity: TextView = itemView.findViewById(R.id.tvCartQty)
         val btnMinus: TextView = itemView.findViewById(R.id.btnMinus)
         val btnPlus: TextView = itemView.findViewById(R.id.btnPlus)
-        val btnDelete: TextView = itemView.findViewById(R.id.btnRemove)
+        val btnDelete: TextView = itemView.findViewById(R.id.btnDelete)
         val tvNote: TextView = itemView.findViewById(R.id.tvCartNote)
     }
 
@@ -41,6 +49,15 @@ class CartAdapter(
 
     override fun onBindViewHolder(holder: CartViewHolder, position: Int) {
         val item = CartManager.getItems()[position]
+
+        // Reset swipe state on rebind
+        holder.swipeLayout.close(smooth = false)
+        holder.swipeLayout.onSwipeOpened = { openedLayout ->
+            if (openedSwipeLayout != null && openedSwipeLayout != openedLayout) {
+                openedSwipeLayout?.close(smooth = true)
+            }
+            openedSwipeLayout = openedLayout
+        }
 
         SampleData.loadCartItemImage(holder.ivImage, holder.tvEmoji, item)
 
@@ -85,7 +102,12 @@ class CartAdapter(
             onChanged()
         }
 
+        // Action: Xóa sản phẩm khi bấm nút Xóa màu đỏ (kéo từ phải sang trái để thấy)
         holder.btnDelete.setOnClickListener {
+            holder.swipeLayout.close(smooth = false)
+            if (openedSwipeLayout == holder.swipeLayout) {
+                openedSwipeLayout = null
+            }
             CartManager.remove(item)
             notifyDataSetChanged()
             onChanged()

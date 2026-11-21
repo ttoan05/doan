@@ -58,7 +58,7 @@ interface RestaurantDao : BaseDao {
                         badge = badge,
                         bgColorStart = bgStart,
                         bgColorEnd = bgEnd,
-                        imageRes = imageRes,
+                        imageRes = SampleData.resolveRestaurantImage(id, name, imageRes, desc),
                         imageUri = imageUri.ifEmpty { null }
                     )
                 )

@@ -34,19 +34,19 @@
                     android:layout_height="wrap_content"
                     android:visibility="gone"/>
 
-                <TextView
+                <ImageView
                     android:id="@+id/btnBack"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_gravity="top|start"
                     android:layout_margin="16dp"
-                    android:gravity="center"
-                    android:text="‹"
-                    android:textSize="28sp"
-                    android:textColor="#333333"
                     android:background="@drawable/bg_heart"
                     android:clickable="true"
-                    android:focusable="true"/>
+                    android:focusable="true"
+                    android:padding="9dp"
+                    android:scaleType="centerInside"
+                    android:src="@drawable/ic_chevron_left_dark"
+                    android:contentDescription="Quay lại"/>
 
                 <ImageView
                     android:id="@+id/ivProdHeart"

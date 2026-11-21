@@ -3,6 +3,8 @@ package com.example.foodhub.ui.auth
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -39,6 +41,21 @@ class SignUpActivity : AppCompatActivity() {
         tvPhoneError  = findViewById(R.id.tvPhoneError)
         tvPasswordError = findViewById(R.id.tvPasswordError)
         tvAgreeError  = findViewById(R.id.tvAgreeError)
+
+        // Ẩn / hiện mật khẩu
+        val ivTogglePassword = findViewById<ImageView>(R.id.ivTogglePassword)
+        var isPasswordVisible = false
+        ivTogglePassword.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
+                etPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                ivTogglePassword.setImageResource(R.drawable.ic_eye_visible)
+            } else {
+                etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+                ivTogglePassword.setImageResource(R.drawable.ic_eye_invisible)
+            }
+            etPassword.setSelection(etPassword.text.length)
+        }
 
         // Tối ưu hóa chọn và sao chép toàn bộ email (chạm giữ hoặc chạm đúp sẽ bôi đen toàn bộ email)
         setupEmailSelection(etEmail)
@@ -163,13 +180,13 @@ class SignUpActivity : AppCompatActivity() {
     }
 
     private fun showError(field: EditText, errorView: TextView, msg: String) {
-        field.setBackgroundResource(R.drawable.bg_field_error)
+        field.setBackgroundResource(R.drawable.bg_field_warm_error)
         errorView.text = msg
         errorView.visibility = View.VISIBLE
     }
 
     private fun hideError(field: EditText, errorView: TextView) {
-        field.setBackgroundResource(R.drawable.bg_field)
+        field.setBackgroundResource(R.drawable.bg_field_warm)
         errorView.visibility = View.GONE
     }
 }

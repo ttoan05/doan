@@ -4,12 +4,15 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.text.method.HideReturnsTransformationMethod
+import android.text.method.PasswordTransformationMethod
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,8 +23,8 @@ import com.example.foodhub.data.DatabaseHelper
 import com.example.foodhub.data.NotificationStore
 import com.example.foodhub.data.OrderManager
 import com.example.foodhub.data.UserProfileManager
-import com.example.foodhub.ui.home.MainActivity
 import com.example.foodhub.utils.SampleData
+import com.example.foodhub.ui.home.MainActivity
 
 class LoginActivity : AppCompatActivity() {
 
@@ -98,6 +101,21 @@ class LoginActivity : AppCompatActivity() {
         tvEmailError    = findViewById(R.id.tvEmailError)
         tvPasswordError = findViewById(R.id.tvPasswordError)
 
+        // Ẩn / hiện mật khẩu
+        val ivTogglePassword = findViewById<ImageView>(R.id.ivTogglePassword)
+        var isPasswordVisible = false
+        ivTogglePassword.setOnClickListener {
+            isPasswordVisible = !isPasswordVisible
+            if (isPasswordVisible) {
+                etPassword.transformationMethod = HideReturnsTransformationMethod.getInstance()
+                ivTogglePassword.setImageResource(R.drawable.ic_eye_visible)
+            } else {
+                etPassword.transformationMethod = PasswordTransformationMethod.getInstance()
+                ivTogglePassword.setImageResource(R.drawable.ic_eye_invisible)
+            }
+            etPassword.setSelection(etPassword.text.length)
+        }
+
         // Khôi phục tài khoản nếu trước đó đã tích "Ghi nhớ tôi"
         loadRememberedAccount()
 
@@ -114,9 +132,18 @@ class LoginActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvForgot).setOnClickListener {
             Toast.makeText(
                 this,
-                " Tài khoản Admin: admin@foodhub.com / MK: 123456\n Tài khoản Người dùng: truong@email.com / MK: 123456\nHoặc bạn hãy bấm 'Đăng kí ngay' để tạo tài khoản mới.",
+                "Vui lòng liên hệ qua email: foodhub2@gmail.com để được hỗ trợ cấp lại mật khẩu.",
                 Toast.LENGTH_LONG
             ).show()
+        }
+
+        // Đăng nhập mạng xã hội (Google & Facebook)
+        findViewById<View>(R.id.btnGoogleLogin)?.setOnClickListener {
+            Toast.makeText(this, "Đang kết nối tài khoản Google...", Toast.LENGTH_SHORT).show()
+        }
+
+        findViewById<View>(R.id.btnFacebookLogin)?.setOnClickListener {
+            Toast.makeText(this, "Đang kết nối tài khoản Facebook...", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -221,7 +248,7 @@ class LoginActivity : AppCompatActivity() {
                 apply()
             }
 
-            val roleLabel = if (UserProfileManager.isAdmin) " [Admin]" else ""
+            val roleLabel = if (UserProfileManager.isAdmin) " [Admin] " else ""
             Toast.makeText(this, "Đăng nhập thành công! Chào mừng ${user.name}$roleLabel", Toast.LENGTH_SHORT).show()
 
             startActivity(Intent(this, MainActivity::class.java))
@@ -239,13 +266,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun showError(field: EditText, errorView: TextView, msg: String) {
-        field.setBackgroundResource(R.drawable.bg_field_error)
+        field.setBackgroundResource(R.drawable.bg_field_warm_error)
         errorView.text = msg
         errorView.visibility = View.VISIBLE
     }
 
     private fun hideError(field: EditText, errorView: TextView) {
-        field.setBackgroundResource(R.drawable.bg_field)
+        field.setBackgroundResource(R.drawable.bg_field_warm)
         errorView.visibility = View.GONE
     }
 }

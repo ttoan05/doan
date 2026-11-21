@@ -22,11 +22,11 @@ object SampleData {
         get() = _categories
 
     val DEFAULT_FOODS = listOf(
-        Food(1, "Phở bò đặc biệt",   "Quán Phở Tuyệt",   4.8, 156, "45.000đ", "Phở",      "🍲", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_pho_bo,
+        Food(1, "Phở bò đặc biệt",    "Quán Phở Tuyệt",   4.8, 120, "30.000đ", "Phở",      "🍜", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_pho_bo,
             sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Phở bò đặc biệt", "Phở")),
             toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Phở bò đặc biệt", "Phở"))
         ),
-        Food(2, "Gà rán giòn cay",   "KFC Việt Nam",      4.9, 234, "55.000đ", "Gà rán",   "🍗", Color.parseColor("#E76F51"), Color.parseColor("#C1440E"), R.drawable.img_ga_ran,
+        Food(2, "Gà rán giòn cay",    "KFC Việt Nam",     4.9, 230, "45.000đ", "Gà rán",   "🍗", Color.parseColor("#F4A261"), Color.parseColor("#E76F51"), R.drawable.img_ga_ran,
             sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Gà rán giòn cay", "Gà rán")),
             toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Gà rán giòn cay", "Gà rán"))
         ),
@@ -34,7 +34,7 @@ object SampleData {
             sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Bánh mì thập cẩm", "Bánh mì")),
             toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Bánh mì thập cẩm", "Bánh mì"))
         ),
-        Food(4, "Cơm tấm sườn nướng","Cơm tấm Quỳnh",    4.6, 112, "35.000đ", "Cơm",      "🍛", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_com_tam,
+        Food(4, "Cơm tấm sườn nướng","Cơm tấm Quỳnh",    4.6, 112, "35.000đ", "Cơm",      "🍱", Color.parseColor("#E63946"), Color.parseColor("#C1121F"), R.drawable.img_com_tam,
             sizesJson = FoodSizeHelper.sizesToJson(FoodSizeHelper.getDefaultSizes("Cơm tấm sườn nướng", "Cơm")),
             toppingsJson = FoodSizeHelper.toppingsToJson(FoodSizeHelper.getDefaultToppings("Cơm tấm sườn nướng", "Cơm"))
         ),
@@ -62,6 +62,22 @@ object SampleData {
     val RESTAURANTS: List<Restaurant>
         get() = _restaurants
 
+    val KNOWN_FOOD_IMAGES = setOf(
+        R.drawable.img_pho_bo,
+        R.drawable.img_ga_ran,
+        R.drawable.img_banh_mi,
+        R.drawable.img_com_tam,
+        R.drawable.img_mi_quang,
+        R.drawable.img_nuoc_chanh,
+        R.drawable.img_res_pho,
+        R.drawable.img_res_kfc,
+        R.drawable.img_res_banh_mi
+    )
+
+    fun isKnownFoodImage(resId: Int): Boolean {
+        return resId in KNOWN_FOOD_IMAGES
+    }
+
     /**
      * Tự động ánh xạ ảnh drawable chuẩn cho món ăn theo ID, tên món hoặc danh mục.
      */
@@ -76,24 +92,27 @@ object SampleData {
             lower.contains("bánh mì") || catLower.contains("bánh mì") -> R.drawable.img_banh_mi
             lower.contains("cơm") || catLower.contains("cơm") -> R.drawable.img_com_tam
             lower.contains("mì quảng") || lower.contains("mì") || catLower.contains("mì") -> R.drawable.img_mi_quang
-            lower.contains("chanh") || lower.contains("nước") || lower.contains("trà") || lower.contains("sữa") || catLower.contains("uống") -> R.drawable.img_nuoc_chanh
-            storedRes != 0 -> storedRes
+            lower.contains("chanh") || lower.contains("nước") || lower.contains("trà") || lower.contains("sữa") || lower.contains("mía") || catLower.contains("uống") -> R.drawable.img_nuoc_chanh
+            isKnownFoodImage(storedRes) -> storedRes
             else -> R.drawable.img_com_tam
         }
     }
 
     /**
-     * Tự động ánh xạ ảnh drawable chuẩn cho nhà hàng theo ID hoặc tên quán.
+     * Tự động ánh xạ ảnh drawable chuẩn cho nhà hàng theo ID, tên quán hoặc mô tả.
      */
-    fun resolveRestaurantImage(id: Int, name: String, storedRes: Int = 0): Int {
+    fun resolveRestaurantImage(id: Int, name: String, storedRes: Int = 0, desc: String = ""): Int {
         val def = DEFAULT_RESTAURANTS.find { it.id == id || it.name.trim().equals(name.trim(), ignoreCase = true) }
         if (def != null && def.imageRes != 0) return def.imageRes
-        val lower = name.lowercase()
+        val lower = "$name $desc".lowercase()
         return when {
             lower.contains("phở") -> R.drawable.img_res_pho
             lower.contains("kfc") || lower.contains("gà") -> R.drawable.img_res_kfc
             lower.contains("bánh mì") -> R.drawable.img_res_banh_mi
-            storedRes != 0 -> storedRes
+            lower.contains("cơm") -> R.drawable.img_com_tam
+            lower.contains("mì quảng") || lower.contains("mì") -> R.drawable.img_mi_quang
+            lower.contains("mía") || lower.contains("chanh") || lower.contains("nước") || lower.contains("trà") || lower.contains("sữa") || lower.contains("cafe") || lower.contains("cà phê") || lower.contains("uống") || lower.contains("sinh tố") || lower.contains("giải khát") -> R.drawable.img_nuoc_chanh
+            isKnownFoodImage(storedRes) -> storedRes
             else -> R.drawable.img_res_pho
         }
     }
@@ -125,7 +144,7 @@ object SampleData {
             if (options.outHeight > reqHeight || options.outWidth > reqWidth) {
                 val halfHeight = options.outHeight / 2
                 val halfWidth = options.outWidth / 2
-                while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
                     inSampleSize *= 2
                 }
             }
@@ -138,57 +157,51 @@ object SampleData {
     }
 
     /**
-     * Hiển thị ảnh món ăn ưu tiên ảnh người dùng upload từ máy (imageUri), sau đó đến drawable tài nguyên.
+     * Nạp ảnh cho Food vào ImageView.
      */
     fun loadFoodImage(imageView: ImageView, emojiView: TextView?, food: Food) {
         val uri = if (!food.imageUri.isNullOrEmpty()) food.imageUri else resolveFoodImageUri(food.id, imageView.context)
         if (!uri.isNullOrEmpty()) {
             val file = File(uri)
             if (file.exists()) {
-                try {
-                    val bitmap = decodeSampledBitmap(file.absolutePath, 350, 350)
-                    if (bitmap != null) {
-                        imageView.setImageBitmap(bitmap)
-                        imageView.visibility = View.VISIBLE
-                        emojiView?.visibility = View.GONE
-                        return
-                    }
-                } catch (_: Throwable) {}
+                val bitmap = decodeSampledBitmap(file.absolutePath, 300, 300)
+                if (bitmap != null) {
+                    imageView.setImageBitmap(bitmap)
+                    imageView.visibility = View.VISIBLE
+                    emojiView?.visibility = View.GONE
+                    return
+                }
             }
         }
-
         val res = resolveFoodImage(food.id, food.name, food.imageRes, food.category)
         if (res != 0) {
             imageView.setImageResource(res)
             imageView.visibility = View.VISIBLE
             emojiView?.visibility = View.GONE
         } else {
-            imageView.setImageResource(R.drawable.img_com_tam)
-            imageView.visibility = View.VISIBLE
-            emojiView?.visibility = View.GONE
+            imageView.visibility = View.GONE
+            emojiView?.text = food.emoji
+            emojiView?.visibility = View.VISIBLE
         }
     }
 
     /**
-     * Hiển thị ảnh cho CartItem trong Giỏ hàng và Đơn hàng.
+     * Nạp ảnh cho CartItem vào ImageView.
      */
     fun loadCartItemImage(imageView: ImageView, emojiView: TextView?, item: CartItem) {
         val uri = if (!item.imageUri.isNullOrEmpty()) item.imageUri else resolveFoodImageUri(item.foodId, imageView.context)
         if (!uri.isNullOrEmpty()) {
             val file = File(uri)
             if (file.exists()) {
-                try {
-                    val bitmap = decodeSampledBitmap(file.absolutePath, 200, 200)
-                    if (bitmap != null) {
-                        imageView.setImageBitmap(bitmap)
-                        imageView.visibility = View.VISIBLE
-                        emojiView?.visibility = View.GONE
-                        return
-                    }
-                } catch (_: Throwable) {}
+                val bitmap = decodeSampledBitmap(file.absolutePath, 200, 200)
+                if (bitmap != null) {
+                    imageView.setImageBitmap(bitmap)
+                    imageView.visibility = View.VISIBLE
+                    emojiView?.visibility = View.GONE
+                    return
+                }
             }
         }
-
         val res = resolveFoodImage(item.foodId, item.name, item.imageRes)
         if (res != 0) {
             imageView.setImageResource(res)
@@ -220,7 +233,7 @@ object SampleData {
             }
         }
 
-        val res = resolveRestaurantImage(restaurant.id, restaurant.name, restaurant.imageRes)
+        val res = resolveRestaurantImage(restaurant.id, restaurant.name, restaurant.imageRes, restaurant.desc)
         if (res != 0) {
             imageView.setImageResource(res)
             imageView.visibility = View.VISIBLE
@@ -276,7 +289,9 @@ object SampleData {
             val rests = db.getAllRestaurants()
             if (rests.isNotEmpty()) {
                 _restaurants.clear()
-                _restaurants.addAll(rests)
+                _restaurants.addAll(rests.map { r ->
+                    r.copy(imageRes = resolveRestaurantImage(r.id, r.name, r.imageRes, r.desc))
+                })
             }
             onFoodsChanged?.invoke()
         } catch (e: Throwable) {

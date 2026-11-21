@@ -23,4 +23,12 @@
     <color name="grad1_start">#FF7A59</color>
     <color name="grad1_end">#FF4B3A</color>
     <color name="card_shadow">#0F000000</color>
+
+    <!-- Màu giao diện Bếp Nhà / FoodHub tông ấm -->
+    <color name="auth_terracotta">#B83806</color>
+    <color name="auth_card_bg">#FBF9F5</color>
+    <color name="auth_field_stroke">#EAE0D5</color>
+    <color name="auth_text_dark">#261A15</color>
+    <color name="auth_text_label">#362822</color>
+    <color name="auth_text_grey">#7D716A</color>
 </resources>

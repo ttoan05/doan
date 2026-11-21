@@ -30,7 +30,7 @@
                 android:background="@drawable/bg_banner_gradient" />
 
             <!-- Circular Floating Back Button -->
-            <TextView
+            <ImageView
                 android:id="@+id/btnBack"
                 android:layout_width="38dp"
                 android:layout_height="38dp"
@@ -40,11 +40,10 @@
                 android:background="@drawable/bg_circle_dark"
                 android:clickable="true"
                 android:focusable="true"
-                android:gravity="center"
-                android:text="‹"
-                android:textColor="#FFFFFF"
-                android:textSize="26sp"
-                android:textStyle="bold" />
+                android:padding="8dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_chevron_left_white"
+                android:contentDescription="Quay lại" />
 
             <!-- Overlay Restaurant Info at Bottom of Banner -->
             <LinearLayout
